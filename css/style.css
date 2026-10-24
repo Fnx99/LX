@@ -1912,7 +1912,9 @@ a.info-value:hover {
 .minimal .hero-slides,
 .minimal .hero-slide.active { min-height: 78vh; }
 .minimal .hero-overlay {
-  background: linear-gradient(180deg, rgba(17, 23, 19, 0.35) 0%, rgba(17, 23, 19, 0.65) 100%);
+  background:
+    radial-gradient(ellipse at center, rgba(17, 23, 19, 0.55) 0%, rgba(17, 23, 19, 0.25) 70%),
+    linear-gradient(180deg, rgba(17, 23, 19, 0.3) 0%, rgba(17, 23, 19, 0.6) 100%);
 }
 .minimal .hero-card { max-width: 640px; margin: 0 auto; text-align: center; }
 .minimal .hero-card p { margin-left: auto; margin-right: auto; }
