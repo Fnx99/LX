@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://loomxmill.com/sitemap.xml
+Sitemap: https://fashway.com/sitemap.xml
