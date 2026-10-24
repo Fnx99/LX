@@ -1880,3 +1880,185 @@ a.info-value:hover {
     gap: 8px;
   }
 }
+
+/* ==========================================================================
+   MINIMAL REFINEMENT LAYER
+   Calmer spacing, fewer borders, less visual noise.
+   ========================================================================== */
+.minimal .section-pad { padding: 120px 0; }
+.minimal .section-header { margin-bottom: 48px; }
+.minimal .section-eyebrow { letter-spacing: 0.28em; color: var(--clr-text-faint); }
+
+/* Header — single clean row */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.minimal .brand-logo { align-items: flex-start; text-align: left; }
+.minimal .brand-mark { font-size: 26px; }
+.minimal .brand-sub { font-size: 8.5px; color: var(--clr-text-faint); }
+.minimal .nav-bar { border-top: none; }
+.minimal .nav-links { padding: 0; gap: 44px; }
+.minimal .site-header { border-bottom-color: transparent; }
+.minimal .site-header.scrolled { border-bottom-color: var(--clr-border); box-shadow: none; }
+.minimal .action-btn { border-color: transparent; background: transparent; }
+
+/* Hero — calm, centred, one message */
+.minimal .hero,
+.minimal .hero-slides,
+.minimal .hero-slide.active { min-height: 78vh; }
+.minimal .hero-overlay {
+  background: linear-gradient(180deg, rgba(17, 23, 19, 0.35) 0%, rgba(17, 23, 19, 0.65) 100%);
+}
+.minimal .hero-card { max-width: 640px; margin: 0 auto; text-align: center; }
+.minimal .hero-card p { margin-left: auto; margin-right: auto; }
+.minimal .hero-actions { justify-content: center; }
+.minimal .hero-eyebrow {
+  border: none;
+  background: none;
+  backdrop-filter: none;
+  padding: 0;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* Values — one quiet line */
+.minimal .pillars-bar { background: var(--clr-bg); padding: 28px 0; }
+.minimal .pillars-grid { grid-template-columns: repeat(3, 1fr); }
+.minimal .pillar-item { justify-content: center; padding: 0; }
+.minimal .pillar-text h3 {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clr-text-muted);
+}
+
+/* Product tabs & cards — image-first, minimal text */
+.minimal .product-tabs { gap: 28px; margin-bottom: 48px; }
+.minimal .tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  padding: 6px 0;
+}
+.minimal .tab-btn.active { background: none; color: var(--clr-forest); border-bottom-color: var(--clr-gold); }
+.minimal .product-grid { gap: 40px 32px; }
+.minimal .product-card { background: transparent; border: none; }
+.minimal .product-card:hover { transform: none; box-shadow: none; }
+.minimal .product-media { aspect-ratio: 4 / 5; }
+.minimal .product-body { padding: 18px 0 0; text-align: center; }
+.minimal .product-title { font-size: 21px; font-weight: 500; }
+.minimal .product-meta { color: var(--clr-text-faint); font-weight: 500; margin-bottom: 0; }
+
+/* Bespoke — simple steps */
+.minimal .bespoke { background: var(--clr-surface-warm); border-bottom: none; }
+.minimal .bespoke-wrapper { grid-template-columns: 1fr 1fr; gap: 80px; }
+.minimal .bespoke-steps { gap: 0; margin-bottom: 40px; }
+.minimal .step-item {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--clr-border);
+  border-radius: 0;
+  padding: 18px 0;
+  align-items: center;
+}
+.minimal .step-num { font-size: 18px; color: var(--clr-gold); min-width: 28px; }
+.minimal .step-item h3 { margin: 0; font-weight: 500; }
+.minimal .collage-main { border: none; box-shadow: none; }
+.minimal .collage-main img { height: 520px; }
+
+/* About — centred statement + single quote */
+.minimal .about { background: var(--clr-bg); border-bottom: none; }
+.about-simple { max-width: 720px; text-align: center; }
+.about-lead {
+  font-size: 17px;
+  line-height: 1.8;
+  color: var(--clr-text-muted);
+  margin-bottom: 64px;
+}
+.featured-quote {
+  padding-top: 48px;
+  border-top: 1px solid var(--clr-border);
+}
+.featured-quote p {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(22px, 2.6vw, 30px);
+  line-height: 1.45;
+  color: var(--clr-forest);
+  margin-bottom: 18px;
+}
+.featured-quote cite {
+  font-style: normal;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clr-text-faint);
+}
+
+/* Contact — plain list + light form */
+.minimal .contact { background: var(--clr-surface-warm); }
+.contact-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 28px;
+  font-size: 15px;
+  color: var(--clr-forest);
+}
+.contact-list a:hover { color: var(--clr-gold-dark); }
+.minimal .contact-form { box-shadow: none; border: none; }
+
+/* Footer — one simple row */
+.minimal .site-footer { padding: 48px 0; }
+.footer-simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.minimal .footer-brand { margin-bottom: 0; }
+.minimal .footer-brand .brand-mark { font-size: 22px; }
+.footer-links {
+  list-style: none;
+  display: flex;
+  gap: 32px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.footer-links a { color: rgba(250, 248, 245, 0.7); }
+.footer-links a:hover { color: var(--clr-gold-light); }
+.minimal .footer-copy { font-size: 12px; color: rgba(250, 248, 245, 0.5); }
+
+@media (max-width: 1080px) {
+  .minimal .bespoke-wrapper { grid-template-columns: 1fr; gap: 48px; }
+  .minimal .collage-main img { height: 380px; }
+}
+
+@media (max-width: 767px) {
+  .minimal .section-pad { padding: 80px 0; }
+  .minimal .nav-bar {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+  }
+  .minimal .nav-links { padding: 8px 28px 20px; gap: 0; }
+  .minimal .header-row { position: relative; }
+  .minimal .pillars-grid { grid-template-columns: 1fr; gap: 10px; }
+  .minimal .product-media img,
+  .minimal .product-quick-actions { opacity: 1; transform: none; }
+  .minimal .product-quick-actions { opacity: 1; }
+  .footer-simple { flex-direction: column; text-align: center; }
+  .footer-links { flex-wrap: wrap; justify-content: center; gap: 20px; }
+}
