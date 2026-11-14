@@ -1,12 +1,11 @@
 /**
- * FASHWAY — Luxury Textile Atelier Interactive Controller
- * Powers navigation, hero showcase slider, category filtering,
- * quick-view modal, swatch selection bag, and scroll animations.
+ * FASHWAY — Interactive Controller
+ * Powers sticky nav, mobile menu, collection filtering, quick-view modal,
+ * swatch selection list, scroll reveal, and sample inquiry form.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   initNav();
-  initHeroSlider();
   initProductFilters();
   initQuickViewModal();
   initSwatchList();
@@ -21,9 +20,9 @@ function initNav() {
   const links = document.getElementById('nav-links');
 
   if (header) {
-    window.addEventListener('scroll', () => {
-      header.classList.toggle('scrolled', window.scrollY > 20);
-    }, { passive: true });
+    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 24);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
   }
 
   if (toggle && links) {
@@ -43,82 +42,29 @@ function initNav() {
   }
 }
 
-/* ---------- 2. Hero Showcase Slider ---------- */
-function initHeroSlider() {
-  const slides = document.querySelectorAll('.hero-slide');
-  const dots = document.querySelectorAll('.hero-dot');
-  if (slides.length < 2) return;
-
-  let current = 0;
-  let timer = null;
-
-  function goToSlide(index) {
-    slides[current].classList.remove('active');
-    dots[current]?.classList.remove('active');
-    current = (index + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    dots[current]?.classList.add('active');
-  }
-
-  function startAutoPlay() {
-    stopAutoPlay();
-    timer = setInterval(() => {
-      goToSlide(current + 1);
-    }, 6500);
-  }
-
-  function stopAutoPlay() {
-    if (timer) clearInterval(timer);
-  }
-
-  dots.forEach(dot => {
-    dot.addEventListener('click', () => {
-      const target = Number(dot.getAttribute('data-target') || 0);
-      goToSlide(target);
-      startAutoPlay();
-    });
-  });
-
-  startAutoPlay();
-}
-
-/* ---------- 3. Product Category Filtering ---------- */
+/* ---------- 2. Product Category Filtering ---------- */
 function initProductFilters() {
   const tabBtns = document.querySelectorAll('.tab-btn');
   const cards = document.querySelectorAll('.product-card');
-  const categoryTriggers = document.querySelectorAll('[data-filter-trigger]');
-
-  function applyFilter(filter) {
-    tabBtns.forEach(btn => {
-      const active = btn.getAttribute('data-filter') === filter;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-selected', String(active));
-    });
-
-    cards.forEach(card => {
-      const category = card.getAttribute('data-category');
-      const match = filter === 'all' || category === filter;
-      card.classList.toggle('hidden', !match);
-    });
-  }
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      applyFilter(btn.getAttribute('data-filter') || 'all');
-    });
-  });
+      const filter = btn.getAttribute('data-filter') || 'all';
+      tabBtns.forEach(b => {
+        const active = b === btn;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-selected', String(active));
+      });
 
-  categoryTriggers.forEach(trigger => {
-    trigger.addEventListener('click', () => {
-      const targetFilter = trigger.getAttribute('data-filter-trigger');
-      if (targetFilter) {
-        applyFilter(targetFilter);
-      }
+      cards.forEach(card => {
+        const match = filter === 'all' || card.getAttribute('data-category') === filter;
+        card.classList.toggle('hidden', !match);
+      });
     });
   });
 }
 
-/* ---------- 4. Quick View Modal ---------- */
+/* ---------- 3. Quick View Modal ---------- */
 function initQuickViewModal() {
   const modal = document.getElementById('quick-view-modal');
   const closeBtn = document.getElementById('modal-close');
@@ -141,15 +87,11 @@ function initQuickViewModal() {
       if (!card) return;
 
       const title = card.getAttribute('data-title') || '';
-      const spec = card.getAttribute('data-spec') || '';
-      const desc = card.getAttribute('data-desc') || '';
-      const img = card.getAttribute('data-img') || '';
-
       if (modalTitle) modalTitle.textContent = title;
-      if (modalSpec) modalSpec.textContent = spec;
-      if (modalDesc) modalDesc.textContent = desc;
+      if (modalSpec) modalSpec.textContent = card.getAttribute('data-spec') || '';
+      if (modalDesc) modalDesc.textContent = card.getAttribute('data-desc') || '';
       if (modalImg) {
-        modalImg.src = img;
+        modalImg.src = card.getAttribute('data-img') || '';
         modalImg.alt = title;
       }
 
@@ -160,19 +102,15 @@ function initQuickViewModal() {
 
   closeBtn?.addEventListener('click', closeModal);
   inquireBtn?.addEventListener('click', closeModal);
-
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
   });
-
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('open')) {
-      closeModal();
-    }
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
   });
 }
 
-/* ---------- 5. Swatch Selection List ---------- */
+/* ---------- 4. Swatch Selection List ---------- */
 function initSwatchList() {
   const selected = new Set();
   const bagCount = document.getElementById('bag-count');
@@ -183,8 +121,8 @@ function initSwatchList() {
 
   function renderSwatches() {
     if (bagCount) bagCount.textContent = String(selected.size);
-
     if (!banner || !listEl) return;
+
     if (selected.size === 0) {
       banner.hidden = true;
       listEl.innerHTML = '';
@@ -196,12 +134,17 @@ function initSwatchList() {
     selected.forEach(item => {
       const chip = document.createElement('span');
       chip.className = 'swatch-chip';
-      chip.innerHTML = `${item} <button type="button" aria-label="Remove ${item}">&times;</button>`;
-      chip.querySelector('button')?.addEventListener('click', () => {
+      chip.textContent = item + ' ';
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.setAttribute('aria-label', `Remove ${item}`);
+      removeBtn.innerHTML = '&times;';
+      removeBtn.addEventListener('click', () => {
         selected.delete(item);
         updateButtons();
         renderSwatches();
       });
+      chip.appendChild(removeBtn);
       listEl.appendChild(chip);
     });
   }
@@ -211,7 +154,7 @@ function initSwatchList() {
       const name = btn.getAttribute('data-swatch') || '';
       const has = selected.has(name);
       btn.classList.toggle('added', has);
-      btn.textContent = has ? '✓ In Swatch List' : '+ Swatch List';
+      btn.textContent = has ? '✓ Added' : '+ Swatch';
     });
   }
 
@@ -219,91 +162,64 @@ function initSwatchList() {
     btn.addEventListener('click', () => {
       const name = btn.getAttribute('data-swatch');
       if (!name) return;
-
-      if (selected.has(name)) {
-        selected.delete(name);
-      } else {
-        selected.add(name);
-      }
+      if (selected.has(name)) selected.delete(name);
+      else selected.add(name);
       updateButtons();
       renderSwatches();
     });
   });
 
   bagBtn?.addEventListener('click', () => {
-    const contactSection = document.getElementById('contact');
-    contactSection?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
     if (selected.size > 0 && messageInput && !messageInput.value.trim()) {
       messageInput.value = `I would like to request physical swatches for: ${Array.from(selected).join(', ')}.`;
     }
   });
 }
 
-/* ---------- 6. Scroll Reveal Animations ---------- */
+/* ---------- 5. Scroll Reveal Animations ---------- */
 function initScrollAnimations() {
-  const targets = document.querySelectorAll(
-    '.pillar-item, .category-card, .product-card, .step-item, .stat-card, .review-card, .info-card, .section-header'
-  );
-
+  const targets = document.querySelectorAll('.spec-card, .pillar-card, .product-card');
   if (!targets.length || !('IntersectionObserver' in window)) return;
 
   const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
+    entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('fade-in-up');
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.12 });
+  }, { threshold: 0.1 });
 
   targets.forEach(t => observer.observe(t));
 }
 
-/* ---------- 7. Contact & Newsletter Forms ---------- */
+/* ---------- 6. Sample Inquiry Form ---------- */
 function initForms() {
   const contactForm = document.getElementById('contact-form');
-  if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const btn = contactForm.querySelector('button[type="submit"]');
-      if (!btn) return;
+  if (!contactForm) return;
 
-      const originalText = btn.textContent;
-      btn.textContent = 'Transmitting to Atelier...';
-      btn.disabled = true;
+  contactForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('contact-submit-btn');
+    if (!btn) return;
 
-      setTimeout(() => {
-        btn.textContent = '✓ Inquiry Received — We Will Reply Shortly';
-        btn.style.backgroundColor = '#2C4A34';
-        btn.style.borderColor = '#2C4A34';
+    const originalText = btn.textContent;
+    btn.textContent = 'Sending…';
+    btn.disabled = true;
 
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.backgroundColor = '';
-          btn.style.borderColor = '';
-          btn.disabled = false;
-          contactForm.reset();
-        }, 3000);
-      }, 1000);
-    });
-  }
-
-  const newsletterForm = document.getElementById('newsletter-form');
-  if (newsletterForm) {
-    newsletterForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const btn = newsletterForm.querySelector('button[type="submit"]');
-      if (!btn) return;
-
-      const originalText = btn.textContent;
-      btn.textContent = 'Welcome to Fashway ✦';
-      btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = '✓ Inquiry Received — We Will Reply Shortly';
+      btn.style.backgroundColor = '#1E7E45';
+      btn.style.borderColor = '#1E7E45';
 
       setTimeout(() => {
         btn.textContent = originalText;
+        btn.style.backgroundColor = '';
+        btn.style.borderColor = '';
         btn.disabled = false;
-        newsletterForm.reset();
-      }, 2800);
-    });
-  }
+        contactForm.reset();
+      }, 3000);
+    }, 800);
+  });
 }
