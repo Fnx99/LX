@@ -1,225 +1,174 @@
 /**
- * FASHWAY — Interactive Controller
- * Powers sticky nav, mobile menu, collection filtering, quick-view modal,
- * swatch selection list, scroll reveal, and sample inquiry form.
+ * Loom X (Pvt) Ltd — site interactions
+ * - Nav state on scroll + mobile menu
+ * - Enquiry list: "Add to enquiry" on fabric cards syncs with the form chips
+ * - Enquiry form composes a real WhatsApp / email message (no fake submit)
+ * - Scroll reveal
  */
+(() => {
+  'use strict';
 
-document.addEventListener('DOMContentLoaded', () => {
-  initNav();
-  initProductFilters();
-  initQuickViewModal();
-  initSwatchList();
-  initScrollAnimations();
-  initForms();
-});
+  const WHATSAPP_NUMBER = '94773374429';
+  const EMAIL = 'loomxlk@gmail.com';
 
-/* ---------- 1. Navigation & Sticky Header ---------- */
-function initNav() {
-  const header = document.getElementById('site-header');
-  const toggle = document.getElementById('nav-toggle');
-  const links = document.getElementById('nav-links');
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-  if (header) {
-    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 24);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  }
+  /* ---------- Nav ---------- */
+  const nav = $('#nav');
+  const toggle = $('#nav-toggle');
+  const links = $('#nav-links');
 
-  if (toggle && links) {
-    toggle.addEventListener('click', () => {
-      const open = links.classList.toggle('open');
-      toggle.classList.toggle('open', open);
-      toggle.setAttribute('aria-expanded', String(open));
-    });
+  const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > 40);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
 
-    links.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        links.classList.remove('open');
-        toggle.classList.remove('open');
-        toggle.setAttribute('aria-expanded', 'false');
-      });
-    });
-  }
-}
+  const setMenu = (open) => {
+    nav.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    document.body.style.overflow = open ? 'hidden' : '';
+  };
+  toggle.addEventListener('click', () => setMenu(!nav.classList.contains('is-open')));
+  $$('a', links).forEach(a => a.addEventListener('click', () => setMenu(false)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+  window.matchMedia('(min-width: 961px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
 
-/* ---------- 2. Product Category Filtering ---------- */
-function initProductFilters() {
-  const tabBtns = document.querySelectorAll('.tab-btn');
-  const cards = document.querySelectorAll('.product-card');
-
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const filter = btn.getAttribute('data-filter') || 'all';
-      tabBtns.forEach(b => {
-        const active = b === btn;
-        b.classList.toggle('active', active);
-        b.setAttribute('aria-selected', String(active));
-      });
-
-      cards.forEach(card => {
-        const match = filter === 'all' || card.getAttribute('data-category') === filter;
-        card.classList.toggle('hidden', !match);
-      });
-    });
-  });
-}
-
-/* ---------- 3. Quick View Modal ---------- */
-function initQuickViewModal() {
-  const modal = document.getElementById('quick-view-modal');
-  const closeBtn = document.getElementById('modal-close');
-  const modalImg = document.getElementById('modal-img');
-  const modalTitle = document.getElementById('modal-title');
-  const modalSpec = document.getElementById('modal-spec');
-  const modalDesc = document.getElementById('modal-desc');
-  const inquireBtn = document.getElementById('modal-inquire-btn');
-
-  if (!modal) return;
-
-  function closeModal() {
-    modal.classList.remove('open');
-    modal.setAttribute('aria-hidden', 'true');
-  }
-
-  document.querySelectorAll('.btn-quick-view').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const card = btn.closest('.product-card');
-      if (!card) return;
-
-      const title = card.getAttribute('data-title') || '';
-      if (modalTitle) modalTitle.textContent = title;
-      if (modalSpec) modalSpec.textContent = card.getAttribute('data-spec') || '';
-      if (modalDesc) modalDesc.textContent = card.getAttribute('data-desc') || '';
-      if (modalImg) {
-        modalImg.src = card.getAttribute('data-img') || '';
-        modalImg.alt = title;
-      }
-
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-    });
-  });
-
-  closeBtn?.addEventListener('click', closeModal);
-  inquireBtn?.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
-  });
-}
-
-/* ---------- 4. Swatch Selection List ---------- */
-function initSwatchList() {
+  /* ---------- Enquiry list ---------- */
   const selected = new Set();
-  const bagCount = document.getElementById('bag-count');
-  const bagBtn = document.getElementById('swatch-bag-btn');
-  const banner = document.getElementById('selected-swatches-banner');
-  const listEl = document.getElementById('selected-swatches-list');
-  const messageInput = document.getElementById('message');
+  const countEl = $('#enquiry-count');
+  const chips = $$('#fabric-chips input');
+  const cards = $$('.fabric');
 
-  function renderSwatches() {
-    if (bagCount) bagCount.textContent = String(selected.size);
-    if (!banner || !listEl) return;
+  const render = () => {
+    countEl.textContent = selected.size;
+    countEl.classList.toggle('has-items', selected.size > 0);
 
-    if (selected.size === 0) {
-      banner.hidden = true;
-      listEl.innerHTML = '';
-      return;
-    }
-
-    banner.hidden = false;
-    listEl.innerHTML = '';
-    selected.forEach(item => {
-      const chip = document.createElement('span');
-      chip.className = 'swatch-chip';
-      chip.textContent = item + ' ';
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.setAttribute('aria-label', `Remove ${item}`);
-      removeBtn.innerHTML = '&times;';
-      removeBtn.addEventListener('click', () => {
-        selected.delete(item);
-        updateButtons();
-        renderSwatches();
-      });
-      chip.appendChild(removeBtn);
-      listEl.appendChild(chip);
+    cards.forEach(card => {
+      const on = selected.has(card.dataset.fabric);
+      card.classList.toggle('is-added', on);
+      const btn = $('.fabric__add', card);
+      btn.setAttribute('aria-pressed', String(on));
+      btn.textContent = on ? 'Added' : 'Add to enquiry';
     });
-  }
 
-  function updateButtons() {
-    document.querySelectorAll('.btn-add-swatch').forEach(btn => {
-      const name = btn.getAttribute('data-swatch') || '';
-      const has = selected.has(name);
-      btn.classList.toggle('added', has);
-      btn.textContent = has ? '✓ Added' : '+ Swatch';
-    });
-  }
+    chips.forEach(chip => { chip.checked = selected.has(chip.value); });
+  };
 
-  document.querySelectorAll('.btn-add-swatch').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const name = btn.getAttribute('data-swatch');
-      if (!name) return;
-      if (selected.has(name)) selected.delete(name);
-      else selected.add(name);
-      updateButtons();
-      renderSwatches();
+  const bump = () => {
+    countEl.classList.remove('bump');
+    void countEl.offsetWidth; // restart animation
+    countEl.classList.add('bump');
+  };
+
+  cards.forEach(card => {
+    $('.fabric__add', card).addEventListener('click', () => {
+      const name = card.dataset.fabric;
+      selected.has(name) ? selected.delete(name) : (selected.add(name), bump());
+      render();
     });
   });
 
-  bagBtn?.addEventListener('click', () => {
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-    if (selected.size > 0 && messageInput && !messageInput.value.trim()) {
-      messageInput.value = `I would like to request physical swatches for: ${Array.from(selected).join(', ')}.`;
-    }
-  });
-}
-
-/* ---------- 5. Scroll Reveal Animations ---------- */
-function initScrollAnimations() {
-  const targets = document.querySelectorAll('.spec-card, .pillar-card, .product-card');
-  if (!targets.length || !('IntersectionObserver' in window)) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('fade-in-up');
-        observer.unobserve(entry.target);
-      }
+  chips.forEach(chip => {
+    chip.addEventListener('change', () => {
+      chip.checked ? selected.add(chip.value) : selected.delete(chip.value);
+      render();
     });
-  }, { threshold: 0.1 });
+  });
 
-  targets.forEach(t => observer.observe(t));
-}
+  $('#enquiry-btn').addEventListener('click', () => {
+    $('#contact').scrollIntoView({ behavior: 'smooth' });
+  });
 
-/* ---------- 6. Sample Inquiry Form ---------- */
-function initForms() {
-  const contactForm = document.getElementById('contact-form');
-  if (!contactForm) return;
+  /* ---------- Enquiry form ---------- */
+  const form = $('#enquiry-form');
+  const errorEl = $('#enquiry-error');
+  let channel = 'whatsapp';
 
-  contactForm.addEventListener('submit', (e) => {
+  $$('button[type="submit"]', form).forEach(btn => {
+    btn.addEventListener('click', () => { channel = btn.dataset.channel; });
+  });
+
+  const showError = (msg, field) => {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+    if (field) {
+      field.closest('.field')?.classList.add('has-error');
+      field.focus();
+    }
+  };
+
+  form.addEventListener('input', () => {
+    errorEl.hidden = true;
+    $$('.has-error', form).forEach(el => el.classList.remove('has-error'));
+  });
+
+  form.addEventListener('submit', e => {
     e.preventDefault();
-    const btn = document.getElementById('contact-submit-btn');
-    if (!btn) return;
 
-    const originalText = btn.textContent;
-    btn.textContent = 'Sending…';
-    btn.disabled = true;
+    const f = form.elements;
+    const name = f.namedItem('name').value.trim();
+    const business = f.namedItem('business').value.trim();
+    const type = f.namedItem('type').value;
+    const qty = f.namedItem('quantity').value.trim();
+    const msg = f.namedItem('message').value.trim();
+    const fabrics = chips.filter(c => c.checked).map(c => c.value);
 
-    setTimeout(() => {
-      btn.textContent = '✓ Inquiry Received — We Will Reply Shortly';
-      btn.style.backgroundColor = '#1E7E45';
-      btn.style.borderColor = '#1E7E45';
+    if (!name) return showError('Please add your name.', f.namedItem('name'));
+    if (!fabrics.length && !msg) {
+      return showError('Please choose at least one fabric or tell us what you need.', f.namedItem('message'));
+    }
 
-      setTimeout(() => {
-        btn.textContent = originalText;
-        btn.style.backgroundColor = '';
-        btn.style.borderColor = '';
-        btn.disabled = false;
-        contactForm.reset();
-      }, 3000);
-    }, 800);
+    const details = [`Name: ${name}`];
+    if (business) details.push(`Business: ${business}`);
+    if (type) details.push(`Business type: ${type}`);
+    if (fabrics.length) details.push(`Fabrics: ${fabrics.join(', ')}`);
+    if (qty) details.push(`Approx. quantity: ${qty}`);
+    if (msg) details.push(`Details: ${msg}`);
+
+    const text = [
+      'Hello Loom X,',
+      '',
+      "I'd like to enquire about your fabrics.",
+      '',
+      ...details,
+      '',
+      'Please let me know colours, availability and pricing. Thank you.'
+    ].join('\n');
+
+    if (channel === 'email') {
+      const subject = `Fabric enquiry${business ? ' — ' + business : ''}`;
+      window.location.href = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+    } else {
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    }
   });
-}
+
+  /* ---------- Reveal on scroll ---------- */
+  const reveals = $$('.reveal');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (reduce || !('IntersectionObserver' in window)) {
+    reveals.forEach(el => el.classList.add('is-visible'));
+  } else {
+    // Stagger siblings inside grids
+    $$('.fabric-grid, .customer-grid, .steps, .hero__content').forEach(group => {
+      $$('.reveal', group).forEach((el, i) => el.style.setProperty('--d', `${(i % 3) * 0.09}s`));
+    });
+
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+    reveals.forEach(el => io.observe(el));
+  }
+
+  /* ---------- Footer year ---------- */
+  const year = $('#year');
+  if (year) year.textContent = new Date().getFullYear();
+})();

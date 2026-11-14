@@ -1,71 +1,50 @@
-# Loom X — Play Boa Fabric Supplier Website
+# Loom X (Pvt) Ltd — Website
 
-A minimalist, Apple-inspired single-page website for **Loom X (Pvt) Ltd** — a B2B supplier of premium **Play Boa** plush fabric for soft toy manufacturers, based in Sri Lanka.
+Single-page website for **Loom X (Pvt) Ltd**, a plush & pile fabric supplier based in Kadawatha, Sri Lanka.
 
-Built with **pure HTML5, Vanilla CSS, and lightweight JavaScript** — zero dependencies, ready for instant hosting on **GitHub Pages**.
+Pure HTML, CSS and JavaScript — no build step, ready for GitHub Pages.
 
----
+## Fabrics listed
+
+Play Boa · PV Plush · Velboa · Minky / Super Soft · Faux Fur (long pile) · Polar Fleece
+
+## Customers addressed
+
+Fabric wholesalers & retail shops · Soft toy / plush toy manufacturers · Garment & apparel manufacturers
 
 ## Features
 
-- **Apple-Inspired Design**: Clean typography, generous whitespace, and restrained colour palette.
-- **Single-Page Layout**: Hero → Products → About → Contact, with smooth scroll navigation.
-- **Play Boa Fabric Showcase**: Product gallery with high-res fabric swatches and full specifications.
-- **One-Click WhatsApp Contact**: Floating WhatsApp button and pre-formatted enquiry links.
-- **SEO Optimised**: Descriptive meta tags, Open Graph, structured data (Organization + Product), XML sitemap, and robots.txt.
-- **Fully Responsive**: Works on desktop, tablet, and mobile.
-- **Zero Dependencies**: No frameworks, no build steps — runs directly in any browser.
+- Enquiry list: add fabrics from the range, then send one enquiry
+- Enquiry form opens a pre-filled **WhatsApp** message or **email** (no backend needed)
+- Per-fabric "Ask on WhatsApp" links and a floating WhatsApp button
+- Responsive layout, accessible markup, reduced-motion support
+- SEO: meta tags, Open Graph, Organization structured data, sitemap, robots.txt
 
----
-
-## Directory Structure
+## Structure
 
 ```text
-fashway-site/
-├── index.html              # Single-page website
-├── css/
-│   └── style.css           # Vanilla CSS design system
-├── js/
-│   └── main.js             # Navigation and mobile menu logic
-├── assets/
-│   └── images/             # Fabric swatch photography
-│       ├── hero-fabric.jpg
-│       ├── playboa-ivory.jpg
-│       ├── crimson-boa.jpg
-│       ├── saffron-boa.jpg
-│       └── pvplush-charcoal.jpg
-├── sitemap.xml             # XML sitemap for search engines
-├── robots.txt              # Crawler access rules
-├── .gitignore              # Git ignore file
-└── README.md               # This file
+index.html
+css/style.css
+js/main.js
+assets/images/   hero, fabric close-ups (play-boa, pv-plush, velboa, minky, faux-fur, polar-fleece), fabric-rolls
+sitemap.xml
+robots.txt
 ```
 
----
+## Editing content
 
-## How to Preview Locally
+All contact details live in `index.html` (search for `94773374429` and `loomxlk@gmail.com`)
+and in the two constants at the top of `js/main.js`.
 
-Open `index.html` directly in your browser, or run a local server:
+> Note: the images in `assets/images/` are AI-generated illustrations. Replace them with
+> real photos of your fabrics and stock when available (keep the same file names).
 
-```bash
-npx -y serve . -p 3000
-```
+## Preview locally
 
-Then visit [http://localhost:3000](http://localhost:3000).
-
----
-
-## How to Deploy to GitHub Pages
-
-1. Push the repository to GitHub.
-2. Go to **Settings → Pages → Branch: `main` → Folder: `/ (root)` → Save**.
-3. Your site will be live at `https://YOUR_USERNAME.github.io/YOUR_REPOSITORY/`.
-
----
+Open `index.html` in a browser, or run `npx -y serve . -p 3000`.
 
 ## Contact
 
-- **Company**: Loom X (Pvt) Ltd
-- **Location**: Kadawatha, Sri Lanka
-- **Phone**: [+94 77 337 4429](tel:+94773374429)
-- **WhatsApp**: [+94 77 337 4429](https://wa.me/94773374429)
-- **Email**: [loomxlk@gmail.com](mailto:loomxlk@gmail.com)
+- Loom X (Pvt) Ltd — Kadawatha, Sri Lanka
+- Phone / WhatsApp: [+94 77 337 4429](https://wa.me/94773374429)
+- Email: [loomxlk@gmail.com](mailto:loomxlk@gmail.com)
