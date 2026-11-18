@@ -385,46 +385,56 @@
         return mix(texture2D(tex, uvB).rgb, texture2D(tex, uvA).rgb, b);
       }
 
+      // 5-tap Gaussian-smoothed luminance for soft, pillowy 3D tuft mounds (zero spiky peaks!)
+      float samplePillowLum(sampler2D tex, vec2 uv) {
+        const float r = 0.024;
+        vec3 c0 = sampleSeamlessVS(tex, uv);
+        vec3 c1 = sampleSeamlessVS(tex, uv + vec2(r, 0.0));
+        vec3 c2 = sampleSeamlessVS(tex, uv - vec2(r, 0.0));
+        vec3 c3 = sampleSeamlessVS(tex, uv + vec2(0.0, r));
+        vec3 c4 = sampleSeamlessVS(tex, uv - vec2(0.0, r));
+        vec3 avg = c0 * 0.36 + (c1 + c2 + c3 + c4) * 0.16;
+        return dot(avg, vec3(0.333));
+      }
+
       void main() {
         // World coordinates of the 3D fabric hillside rising ahead of the ant-eye camera
-        float distZ = mix(1.15, 11.5, aGrid.y * aGrid.y * 0.25 + aGrid.y * 0.75);
-        float spanX = mix(2.6, 11.5, aGrid.y) * uAspect;
+        float distZ = mix(1.25, 11.2, aGrid.y * aGrid.y * 0.25 + aGrid.y * 0.75);
+        float spanX = mix(2.5, 10.8, aGrid.y) * uAspect;
         float wx = aGrid.x * spanX;
         float wz = distZ;
 
-        float speed = mix(0.65, 1.15, uMode);
+        float speed = mix(0.55, 0.95, uMode);
         float t = uTime * speed;
 
         // Scrolling macro-fabric UV as the ant camera flies forward over the pile
         vec2 scrollUv = vec2(wx * uTexScale, (wz + uCamZ) * uTexScale);
-        scrollUv.x += sin(wz * 0.35 - t * 0.45) * 0.05;
+        scrollUv.x += sin(wz * 0.32 - t * 0.4) * 0.04;
 
         // Sweeping 3D wave-front transition mask when warping from fabric A to fabric B
         float waveFront = smoothstep(aGrid.y - 0.25, aGrid.y + 0.15, uMorph * 1.35);
 
-        // Sample true macro fabric luminance to extrude real 3D bouclé curls, dimples & tufts
-        vec3 colA = sampleSeamlessVS(uTexA, scrollUv);
-        vec3 colB = sampleSeamlessVS(uTexB, scrollUv);
-        float lumA = dot(colA, vec3(0.333));
-        float lumB = dot(colB, vec3(0.333));
+        // Sample smoothed macro fabric luminance for soft, rounded 3D bouclé curls, dimples & folds
+        float lumA = samplePillowLum(uTexA, scrollUv);
+        float lumB = samplePillowLum(uTexB, scrollUv);
         float lum = mix(lumA, lumB, waveFront);
 
-        // Plump 3D pile tuft relief extruded directly from the macro fabric texture
-        float tuftHeight = smoothstep(0.08, 0.92, lum) * uReliefAmp * 1.45;
+        // Soft, rounded 3D pile tuft relief
+        float tuftHeight = smoothstep(0.10, 0.90, lum) * uReliefAmp * 0.58;
 
         // Macro rolling cloth waves (like fabric billowing in the sea or sky)
-        float w1 = sin(wx * 0.55 + (wz + uCamZ * 0.6) * 0.48 - t * 0.9) * uWaveAmp;
-        float w2 = cos(wx * 0.38 - (wz + uCamZ * 0.5) * 0.62 + t * 0.75) * (uWaveAmp * 0.75);
-        float warpWave = sin(aGrid.y * 9.0 - uMorph * 8.0) * uWarp * 0.25;
+        float w1 = sin(wx * 0.52 + (wz + uCamZ * 0.55) * 0.45 - t * 0.85) * uWaveAmp;
+        float w2 = cos(wx * 0.36 - (wz + uCamZ * 0.45) * 0.58 + t * 0.70) * (uWaveAmp * 0.72);
+        float warpWave = sin(aGrid.y * 8.0 - uMorph * 7.5) * uWarp * 0.22;
 
         // Interactive cursor touch press & brush ripple on the plush surface
         float curX = (uMouse.x - 0.5) * 6.5;
         float curZ = 2.6 + (1.0 - uMouse.y) * 4.5;
         float d2 = (wx - curX) * (wx - curX) + (wz - curZ) * (wz - curZ);
-        float touchPress = -exp(-d2 * 0.45) * 0.36;
+        float touchPress = -exp(-d2 * 0.45) * 0.30;
 
         // Rise upward with distance so the 3D fabric landscape fills the entire viewport
-        float hillRise = (distZ - 1.15) * 0.46 - 1.35;
+        float hillRise = (distZ - 1.25) * 0.47 - 1.28;
         float wy = hillRise + w1 + w2 + warpWave + tuftHeight + touchPress;
 
         float camX = (uMouse.x - 0.5) * 1.1;
@@ -503,18 +513,18 @@
         float diff = max(0.0, dot(normal, lightDir));
         float rim = pow(clamp(1.0 - normal.y, 0.0, 1.0), 1.45);
 
-        // Deepen crevice shadows slightly and brighten plush tuft tops for 3D pop
-        float ao = mix(0.76, 1.18, vRelief);
-        vec3 lit = texCol * (0.76 + 0.42 * diff) * ao;
-        lit += uRimCol * rim * (0.24 + 0.32 * vRelief + 0.25 * uWarp);
-        lit += uRimCol * max(0.0, vWaveSlope) * 0.14;
+        // Preserve natural studio yarn exposure without over-blowing highlights
+        float ao = mix(0.84, 1.05, vRelief);
+        vec3 lit = texCol * (0.82 + 0.26 * diff) * ao;
+        lit += uRimCol * rim * (0.14 + 0.18 * vRelief + 0.20 * uWarp);
+        lit += uRimCol * max(0.0, vWaveSlope) * 0.08;
 
         // Magical glowing wave crest during fabric-to-fabric warp
         float warpBand = 4.0 * vMorphMask * (1.0 - vMorphMask);
-        lit += uRimCol * warpBand * uWarp * 0.35;
+        lit += uRimCol * warpBand * uWarp * 0.30;
 
         // Gentle atmospheric distance fog at the very top horizon
-        float fog = smoothstep(0.45, 1.0, vDepth) * 0.62;
+        float fog = smoothstep(0.48, 1.0, vDepth) * 0.65;
         gl_FragColor = vec4(mix(lit, uSkyCol, fog), 1.0);
       }
     `;
