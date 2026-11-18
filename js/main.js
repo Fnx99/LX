@@ -220,7 +220,7 @@
     const heroImg = $('#hero-img');
     if (!canvas || !heroImg) return;
 
-    const gl = canvas.getContext('webgl', { alpha: false, antialias: true, powerPreference: 'high-performance' });
+    const gl = canvas.getContext('webgl', { alpha: true, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
     if (!gl) return;
 
     const vsSource = `
@@ -345,14 +345,19 @@
 
     function uploadTexture() {
       if (ready || !heroImg.complete || !heroImg.naturalWidth) return;
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, heroImg);
-      ready = true;
-      canvas.classList.add('is-ready');
+      try {
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, heroImg);
+        ready = true;
+        canvas.classList.add('is-ready');
+      } catch (_) {
+        // Fallback when opened via file:// protocol where WebGL blocks local texture upload
+        ready = false;
+      }
     }
 
     if (heroImg.complete && heroImg.naturalWidth) uploadTexture();
@@ -553,7 +558,7 @@
       const isSky = flowState.mode === 'sky';
       const freq = isSky ? 1.35 : 0.95;
 
-      // 3D parallax & gentle tilt on hero typography
+      // 3D parallax & gentle tilt on hero typography and hero fabric backdrop
       if (heroContent && flowState.scrollY < window.innerHeight) {
         const hx = (flowState.mouseX - 0.5) * -18;
         const hy = (flowState.mouseY - 0.5) * -14 + Math.sin(t * freq) * 6;
@@ -563,6 +568,15 @@
         heroContent.style.setProperty('--hy', `${hy.toFixed(2)}px`);
         heroContent.style.setProperty('--hrx', `${hrx.toFixed(2)}deg`);
         heroContent.style.setProperty('--hry', `${hry.toFixed(2)}deg`);
+
+        const heroImgEl = $('#hero-img');
+        if (heroImgEl) {
+          const ix = (flowState.mouseX - 0.5) * 22 + Math.sin(t * freq * 0.8) * 8;
+          const iy = (flowState.mouseY - 0.5) * 16 + Math.cos(t * freq * 0.7) * 6;
+          const irx = (flowState.mouseY - 0.5) * 3 + Math.sin(t * 0.6) * 1.5;
+          const iry = (0.5 - flowState.mouseX) * 4 + Math.cos(t * 0.5) * 1.8;
+          heroImgEl.style.transform = `perspective(1000px) scale(1.08) translate3d(${ix.toFixed(1)}px, ${iy.toFixed(1)}px, 0) rotateX(${irx.toFixed(2)}deg) rotateY(${iry.toFixed(2)}deg)`;
+        }
       }
 
       // Scroll-velocity 3D pitch ("flying in the sky / diving in the sea" inertia)
