@@ -1,9 +1,12 @@
 /**
- * Loom X (Pvt) Ltd — Site & 3D Microscopic "Ant-Eye Fiber Forest" Engine (v2)
- * - Glitch-free screen-space tangent-normal 3D fiber extrusion (zero ribbon kinks or Z-fighting)
- * - 1,350 slender, silky multi-toned 3D pile fibers + glowing knit root floor + 3D light motes
- * - Seamless near/far horizon growth envelope (zero Z-wrap popping)
- * - Magical fabric-to-fabric warp flight across all 6 Loom X fabrics
+ * Loom X (Pvt) Ltd — Site & 3D Macro-Scale Textile Pile Landscape Engine (v4)
+ * - Zero floating dust/flakes across the page
+ * - Real-time WebGL 3D Subdivided (120×120) Macro Fabric Pile Terrain:
+ *   maps the actual studio macro photographs of all 6 fabrics (Play Boa,
+ *   PV Plush, Velboa, Minky, Faux Fur, Polar Fleece) onto an infinite,
+ *   seamless 3D undulating cloth & tuft-relief landscape at ant-eye scale.
+ * - Magical 3D wave-front warp transitions from fabric to fabric
+ * - 60fps 3D card buoyancy, scroll-flight inertia & magnetic 3D card tilt
  */
 (() => {
   'use strict';
@@ -14,116 +17,70 @@
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-  /* ---------- 6 Fabric Microscopic 3D Forest Presets (Rich Multi-Tone Palettes) ---------- */
+  /* ---------- 6 Real Macro Fabric Worlds ---------- */
   const FABRIC_WORLDS = [
     {
-      name: '01 — Play Boa · Curled Bouclé Forest',
-      // Delicate coiled bouclé spirals in warm ivory, champagne gold & soft rose-pearl
-      height: 2.35,
-      radius: 0.052,
-      curlAmp: 0.22,
-      curlTurns: 5.2,
-      arch: 0.18,
-      domeAmp: 0.08,
-      swayAmp: 0.26,
-      rootCol: [0.18, 0.13, 0.10],
-      midCol:  [0.86, 0.76, 0.62],
-      altCol:  [0.94, 0.78, 0.68],
-      tipCol:  [1.00, 0.97, 0.91],
-      rimCol:  [1.00, 0.78, 0.48],
-      skyCol:  [0.06, 0.05, 0.07]
+      name: '01 — Play Boa · Curled Bouclé Pile',
+      img: 'assets/images/play-boa.jpg',
+      reliefAmp: 0.42,
+      waveAmp: 0.28,
+      texScale: 0.24,
+      rimCol: [1.00, 0.88, 0.72],
+      skyCol: [0.05, 0.05, 0.05]
     },
     {
-      name: '02 — PV Plush · Velvet Pillar Cathedral',
-      // Dense, silky straight velvet micro-columns in dusty rose, berry & violet-pearl sheen
-      height: 2.65,
-      radius: 0.044,
-      curlAmp: 0.03,
-      curlTurns: 2.0,
-      arch: 0.20,
-      domeAmp: 0.03,
-      swayAmp: 0.34,
-      rootCol: [0.16, 0.06, 0.11],
-      midCol:  [0.78, 0.42, 0.52],
-      altCol:  [0.64, 0.40, 0.62],
-      tipCol:  [0.99, 0.82, 0.88],
-      rimCol:  [1.00, 0.68, 0.82],
-      skyCol:  [0.07, 0.04, 0.07]
+      name: '02 — PV Plush · Dense Sheared Velvet Pile',
+      img: 'assets/images/pv-plush.jpg',
+      reliefAmp: 0.36,
+      waveAmp: 0.34,
+      texScale: 0.22,
+      rimCol: [1.00, 0.78, 0.86],
+      skyCol: [0.06, 0.04, 0.05]
     },
     {
-      name: '03 — Velboa · Golden Micro-Tuft Meadow',
-      // Short, dense, velvety honey-amber, terracotta & warm gold tufts
-      height: 1.65,
-      radius: 0.060,
-      curlAmp: 0.025,
-      curlTurns: 1.5,
-      arch: 0.09,
-      domeAmp: 0.04,
-      swayAmp: 0.18,
-      rootCol: [0.19, 0.10, 0.04],
-      midCol:  [0.82, 0.52, 0.22],
-      altCol:  [0.88, 0.42, 0.24],
-      tipCol:  [1.00, 0.86, 0.56],
-      rimCol:  [1.00, 0.76, 0.36],
-      skyCol:  [0.07, 0.05, 0.04]
+      name: '03 — Velboa · Short Sculpted Plush Pile',
+      img: 'assets/images/velboa.jpg',
+      reliefAmp: 0.28,
+      waveAmp: 0.30,
+      texScale: 0.22,
+      rimCol: [1.00, 0.84, 0.56],
+      skyCol: [0.06, 0.04, 0.03]
     },
     {
-      name: '04 — Minky / Super Soft · Silky Dimple-Dome Valley',
-      // Rolling 3D Minky dimple hills with ultra-fine sage, mint & seafoam-silver filaments
-      height: 1.95,
-      radius: 0.040,
-      curlAmp: 0.05,
-      curlTurns: 2.6,
-      arch: 0.24,
-      domeAmp: 0.72,
-      swayAmp: 0.30,
-      rootCol: [0.06, 0.14, 0.11],
-      midCol:  [0.38, 0.64, 0.52],
-      altCol:  [0.36, 0.62, 0.68],
-      tipCol:  [0.84, 0.97, 0.89],
-      rimCol:  [0.64, 1.00, 0.86],
-      skyCol:  [0.04, 0.07, 0.07]
+      name: '04 — Minky / Super Soft · 3D Dimple-Dome Plush',
+      img: 'assets/images/minky.jpg',
+      reliefAmp: 0.44,
+      waveAmp: 0.26,
+      texScale: 0.23,
+      rimCol: [0.80, 1.00, 0.86],
+      skyCol: [0.04, 0.06, 0.05]
     },
     {
-      name: '05 — Faux Fur · Long-Pile Silk Canopy',
-      // Sweeping, multi-layered long-pile fur shafts in oatmeal, amber-champagne & warm pearl
-      height: 3.25,
-      radius: 0.042,
-      curlAmp: 0.07,
-      curlTurns: 2.0,
-      arch: 0.82,
-      domeAmp: 0.04,
-      swayAmp: 0.48,
-      rootCol: [0.16, 0.11, 0.08],
-      midCol:  [0.76, 0.62, 0.48],
-      altCol:  [0.86, 0.66, 0.52],
-      tipCol:  [1.00, 0.95, 0.88],
-      rimCol:  [1.00, 0.84, 0.64],
-      skyCol:  [0.06, 0.05, 0.05]
+      name: '05 — Faux Fur · Layered Long-Pile Fur',
+      img: 'assets/images/faux-fur.jpg',
+      reliefAmp: 0.48,
+      waveAmp: 0.36,
+      texScale: 0.22,
+      rimCol: [1.00, 0.90, 0.74],
+      skyCol: [0.06, 0.05, 0.04]
     },
     {
-      name: '06 — Polar Fleece · Bioluminescent Thermal Cloud',
-      // Brushed, curled thermal loops in deep sapphire, cyan-ice & soft violet glow
-      height: 2.20,
-      radius: 0.050,
-      curlAmp: 0.20,
-      curlTurns: 4.5,
-      arch: 0.42,
-      domeAmp: 0.22,
-      swayAmp: 0.28,
-      rootCol: [0.04, 0.08, 0.18],
-      midCol:  [0.18, 0.42, 0.76],
-      altCol:  [0.38, 0.34, 0.78],
-      tipCol:  [0.68, 0.88, 1.00],
-      rimCol:  [0.45, 0.86, 1.00],
-      skyCol:  [0.03, 0.05, 0.10]
+      name: '06 — Polar Fleece · Brushed Thermal Nap',
+      img: 'assets/images/polar-fleece.jpg',
+      reliefAmp: 0.34,
+      waveAmp: 0.28,
+      texScale: 0.24,
+      rimCol: [0.64, 0.84, 1.00],
+      skyCol: [0.03, 0.05, 0.08]
     }
   ];
 
-  /* ---------- Global 3D Flow & Forest State ---------- */
+  /* ---------- Global 3D Flow & Warp State ---------- */
   const flowState = {
     mode: 'sea',
+    prevIdx: 0,
     fabricIdx: 0,
+    morphProg: 1.0,
     warpPulse: 0,
     camZ: 0,
     mouseX: 0.5,
@@ -182,12 +139,16 @@
   const forestPills = $$('.forest-pill');
   const currentLabel = $('#forest-current-label');
   const warpNextBtn = $('#warp-next-btn');
+  const heroImgEl = $('#hero-img');
 
   function warpToFabric(idx, scrollToHero = false) {
     const cleanIdx = ((idx % FABRIC_WORLDS.length) + FABRIC_WORLDS.length) % FABRIC_WORLDS.length;
     if (cleanIdx !== flowState.fabricIdx) {
+      flowState.prevIdx = flowState.fabricIdx;
       flowState.fabricIdx = cleanIdx;
+      flowState.morphProg = 0.0;
       flowState.warpPulse = 1.0;
+      if (heroImgEl) heroImgEl.src = FABRIC_WORLDS[cleanIdx].img;
     } else {
       flowState.warpPulse = Math.max(flowState.warpPulse, 0.65);
     }
@@ -374,12 +335,11 @@
   }, { passive: true });
 
   /* ==========================================================================
-     2. WEBGL 3D MICROSCOPIC FIBER FOREST (#hero-canvas)
-        - 1,350 slender, silky, multi-toned 3D fibers (32 smooth segments each)
-        - Screen-space tangent-normal ribbon extrusion (zero bowtie twists/glitches)
-        - True homogeneous perspective projection + smooth near/far horizon envelope
+     2. WEBGL 3D DISPLACED MACRO FABRIC PILE TERRAIN (#hero-canvas)
+        Extrudes the actual studio macro photographs of all 6 fabrics into a
+        continuous 120×120 3D perspective cloth & tuft-relief landscape!
      ========================================================================== */
-  function initMicroForestWebGL() {
+  function initMacroFabricTerrainWebGL() {
     const canvas = $('#hero-canvas');
     if (!canvas) return null;
 
@@ -393,195 +353,169 @@
     if (!gl) return null;
 
     const vsSource = `
-      attribute vec4 aFiber; // x: rootX, y: rawZ, z: s (0..1), w: side (-1..1)
-      attribute float aSeed;
+      attribute vec2 aGrid; // x in [-1, 1], y in [0, 1] (near to far)
 
+      uniform sampler2D uTexA;
+      uniform sampler2D uTexB;
+      uniform float uMorph;
       uniform float uTime;
       uniform float uCamZ;
       uniform float uAspect;
       uniform vec2 uMouse;
-      uniform float uMode;
-      uniform float uWarp;
+      uniform float uMode;      // 0 = sea drift, 1 = sky breeze
+      uniform float uWarp;      // 0..1 warp speed pulse
+      uniform float uReliefAmp;
+      uniform float uWaveAmp;
+      uniform float uTexScale;
 
-      uniform float uHeight;
-      uniform float uRadius;
-      uniform float uCurlAmp;
-      uniform float uCurlTurns;
-      uniform float uArch;
-      uniform float uDomeAmp;
-      uniform float uSwayAmp;
-
-      varying float vS;
-      varying float vSide;
+      varying vec2 vTexUv;
       varying float vDepth;
-      varying float vSeed;
+      varying float vRelief;
+      varying float vWaveSlope;
+      varying float vMorphMask;
 
-      // Evaluates a single point on the 3D fiber spine in camera space
-      vec3 evalSpine(float rootX, float rawZ, float worldZ, float env, float s, float seed) {
-        // Hermite smooth emergence from the knit base (vertical at root, smooth bend above)
-        float smoothS = s * s * (3.0 - 2.0 * s);
+      // Seamless dual-offset mirrored sampling (zero tile seams during infinite flight)
+      vec3 sampleSeamlessVS(sampler2D tex, vec2 uv) {
+        vec2 uvA = 1.0 - abs(mod(uv, 2.0) - 1.0);
+        vec2 uvB = 1.0 - abs(mod(uv + vec2(0.5, 0.5), 2.0) - 1.0);
+        vec2 s = sin(uv * 3.14159265);
+        float b = clamp(s.x * s.x * s.y * s.y * 1.6, 0.0, 1.0);
+        uvA = mix(vec2(0.06), vec2(0.94), uvA);
+        uvB = mix(vec2(0.06), vec2(0.94), uvB);
+        return mix(texture2D(tex, uvB).rgb, texture2D(tex, uvA).rgb, b);
+      }
 
-        // Raised Minky dimple-dome hills on the woven floor
-        float dome = sin(rootX * 0.85) * cos(rawZ * 0.85) * uDomeAmp * env;
+      void main() {
+        // World coordinates of the 3D fabric hillside rising ahead of the ant-eye camera
+        float distZ = mix(1.15, 11.5, aGrid.y * aGrid.y * 0.25 + aGrid.y * 0.75);
+        float spanX = mix(2.6, 11.5, aGrid.y) * uAspect;
+        float wx = aGrid.x * spanX;
+        float wz = distZ;
 
-        // Sea / Sky wind wave travelling through the canopy
-        float freq = mix(0.9, 1.5, uMode);
-        float windPhase = uTime * freq + rootX * 0.42 + rawZ * 0.32 + seed * 6.28318;
-        float swayX = sin(windPhase) * uSwayAmp * smoothS;
-        float swayZ = cos(windPhase * 0.85) * (uSwayAmp * 0.5) * smoothS;
+        float speed = mix(0.65, 1.15, uMode);
+        float t = uTime * speed;
 
-        // Smooth 3D bouclé spiral wave (monotonic in Y so ribbons never flip or twist)
-        float curlAngle = s * uCurlTurns + seed * 6.28318 + uTime * 0.55;
-        float curlEnv = sin(s * 3.14159) * smoothS;
-        float curlX = cos(curlAngle) * uCurlAmp * curlEnv;
-        float curlZ = sin(curlAngle) * (uCurlAmp * 0.65) * curlEnv;
+        // Scrolling macro-fabric UV as the ant camera flies forward over the pile
+        vec2 scrollUv = vec2(wx * uTexScale, (wz + uCamZ) * uTexScale);
+        scrollUv.x += sin(wz * 0.35 - t * 0.45) * 0.05;
 
-        // Sweeping fur arch
-        float archAngle = (seed - 0.5) * 2.2;
-        float archX = sin(archAngle) * uArch * smoothS * s;
-        float archZ = cos(archAngle) * (uArch * 0.35) * smoothS * s;
+        // Sweeping 3D wave-front transition mask when warping from fabric A to fabric B
+        float waveFront = smoothstep(aGrid.y - 0.25, aGrid.y + 0.15, uMorph * 1.35);
 
-        float wx = rootX + swayX + curlX + archX;
-        float wz = worldZ + swayZ + curlZ + archZ;
+        // Sample true macro fabric luminance to extrude real 3D bouclé curls, dimples & tufts
+        vec3 colA = sampleSeamlessVS(uTexA, scrollUv);
+        vec3 colB = sampleSeamlessVS(uTexB, scrollUv);
+        float lumA = dot(colA, vec3(0.333));
+        float lumB = dot(colB, vec3(0.333));
+        float lum = mix(lumA, lumB, waveFront);
 
-        // Smooth continuous radial wind-parting around cursor (zero step discontinuity)
-        float cursorX = (uMouse.x - 0.5) * 10.0;
-        float dx = wx - cursorX;
-        float dz = wz - 5.5;
-        float push = exp(-(dx * dx + dz * dz) * 0.22) * smoothS * 1.10;
-        wx += (dx / (0.55 + abs(dx))) * push;
+        // Plump 3D pile tuft relief extruded directly from the macro fabric texture
+        float tuftHeight = smoothstep(0.08, 0.92, lum) * uReliefAmp * 1.45;
 
-        float h = uHeight * (0.86 + 0.28 * seed);
-        float wy = dome + s * h;
+        // Macro rolling cloth waves (like fabric billowing in the sea or sky)
+        float w1 = sin(wx * 0.55 + (wz + uCamZ * 0.6) * 0.48 - t * 0.9) * uWaveAmp;
+        float w2 = cos(wx * 0.38 - (wz + uCamZ * 0.5) * 0.62 + t * 0.75) * (uWaveAmp * 0.75);
+        float warpWave = sin(aGrid.y * 9.0 - uMorph * 8.0) * uWarp * 0.25;
 
-        // Camera slightly higher & wider so fibers look delicate, refined & dense
-        float camX = (uMouse.x - 0.5) * 2.2;
-        float camY = 1.48 + (0.5 - uMouse.y) * 0.40;
+        // Interactive cursor touch press & brush ripple on the plush surface
+        float curX = (uMouse.x - 0.5) * 6.5;
+        float curZ = 2.6 + (1.0 - uMouse.y) * 4.5;
+        float d2 = (wx - curX) * (wx - curX) + (wz - curZ) * (wz - curZ);
+        float touchPress = -exp(-d2 * 0.45) * 0.36;
+
+        // Rise upward with distance so the 3D fabric landscape fills the entire viewport
+        float hillRise = (distZ - 1.15) * 0.46 - 1.35;
+        float wy = hillRise + w1 + w2 + warpWave + tuftHeight + touchPress;
+
+        float camX = (uMouse.x - 0.5) * 1.1;
+        float camY = 0.35 + (0.5 - uMouse.y) * 0.25;
         vec3 rel = vec3(wx - camX, wy - camY, wz);
 
-        float pitch = 0.03 + (0.5 - uMouse.y) * 0.08;
+        float pitch = 0.08 + (0.5 - uMouse.y) * 0.08;
         float cp = cos(pitch), sp = sin(pitch);
-        return vec3(
+        vec3 viewPos = vec3(
           rel.x,
           rel.y * cp + rel.z * sp,
           rel.z * cp - rel.y * sp
         );
-      }
 
-      void main() {
-        float rootX = aFiber.x;
-        float rawZ  = aFiber.y;
-        float s     = aFiber.z;
-        float side  = aFiber.w;
+        float fov = 1.42 - uWarp * 0.15;
+        float z0 = max(0.7, viewPos.z);
+        float near = 0.6;
+        float far = 16.0;
+        float ndcZ = ((far + near) / (far - near)) - (2.0 * far * near) / ((far - near) * z0);
 
-        // Infinite wrapping Z corridor [2.2 .. 24.2] with smooth fade-in/out envelope
-        float spanZ = 22.0;
-        float zRel = mod(rawZ - uCamZ, spanZ);
-        if (zRel < 0.0) zRel += spanZ;
-        float worldZ = zRel + 2.2;
+        gl_Position = vec4(
+          (viewPos.x * fov) / uAspect,
+          viewPos.y * fov,
+          ndcZ * z0,
+          z0
+        );
 
-        // Envelope smoothly tapers fiber thickness to 0 at far horizon & near plane (zero popping!)
-        float env = smoothstep(0.2, 2.8, zRel) * smoothstep(spanZ, spanZ - 3.8, zRel);
-        if (env <= 0.01) {
-          gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
-          return;
-        }
-
-        vec3 p0 = evalSpine(rootX, rawZ, worldZ, env, s, aSeed);
-        vec3 p1 = evalSpine(rootX, rawZ, worldZ, env, min(1.0, s + 0.035), aSeed);
-
-        // Clamp slope so the ribbon normal is always smooth and never flips 180 deg
-        float dx = p1.x - p0.x;
-        float dy = max(0.025, abs(p1.y - p0.y));
-        float slope = clamp(dx / dy, -0.65, 0.65);
-        vec2 norm2d = normalize(vec2(1.0, -slope * 0.45));
-
-        // Smooth root-to-tip taper + soft rounded tip cap
-        float tipCap = sqrt(max(0.0, 1.0 - pow(s, 3.0)));
-        float taper = mix(1.0, 0.28, s) * tipCap;
-        float rad = uRadius * taper * env;
-
-        p0.x += side * rad * norm2d.x;
-        p0.y += side * rad * norm2d.y;
-
-        float fov = 1.78 - uWarp * 0.22;
-        float z0 = max(1.2, p0.z);
-        vec2 finalNdc = vec2((p0.x * fov) / (z0 * uAspect), (p0.y * fov) / z0);
-
-        // Proper homogeneous perspective depth (near = 1.0, far = 26.0) + per-fiber micro-offset
-        float near = 1.0;
-        float far = 26.0;
-        float zAdj = z0 + aSeed * 0.015;
-        float ndcZ = ((far + near) / (far - near)) - (2.0 * far * near) / ((far - near) * zAdj);
-
-        gl_Position = vec4(finalNdc * zAdj, ndcZ * zAdj, zAdj);
-
-        vS = s;
-        vSide = side;
-        vDepth = clamp((z0 - 2.2) / 21.0, 0.0, 1.0);
-        vSeed = aSeed;
+        vTexUv = scrollUv;
+        vDepth = clamp((distZ - 1.15) / 10.35, 0.0, 1.0);
+        vRelief = smoothstep(0.08, 0.92, lum);
+        vWaveSlope = w1 + w2;
+        vMorphMask = waveFront;
       }
     `;
 
     const fsSource = `
       precision highp float;
-      varying float vS;
-      varying float vSide;
+      varying vec2 vTexUv;
       varying float vDepth;
-      varying float vSeed;
+      varying float vRelief;
+      varying float vWaveSlope;
+      varying float vMorphMask;
 
-      uniform vec3 uRootCol;
-      uniform vec3 uMidCol;
-      uniform vec3 uAltCol;
-      uniform vec3 uTipCol;
+      uniform sampler2D uTexA;
+      uniform sampler2D uTexB;
       uniform vec3 uRimCol;
       uniform vec3 uSkyCol;
-      uniform float uTime;
       uniform float uWarp;
 
+      vec3 sampleSeamlessFS(sampler2D tex, vec2 uv) {
+        vec2 uvA = 1.0 - abs(mod(uv, 2.0) - 1.0);
+        vec2 uvB = 1.0 - abs(mod(uv + vec2(0.5, 0.5), 2.0) - 1.0);
+        vec2 s = sin(uv * 3.14159265);
+        float b = clamp(s.x * s.x * s.y * s.y * 1.6, 0.0, 1.0);
+        uvA = mix(vec2(0.06), vec2(0.94), uvA);
+        uvB = mix(vec2(0.06), vec2(0.94), uvB);
+        return mix(texture2D(tex, uvB).rgb, texture2D(tex, uvA).rgb, b);
+      }
+
       void main() {
-        // Smooth 3D cylinder normal across ribbon width (-1..1)
-        float nx = clamp(vSide, -0.99, 0.99);
-        float nz = sqrt(max(0.02, 1.0 - nx * nx));
-        vec3 normal = normalize(vec3(nx, 0.18, nz));
+        // High-resolution studio macro fabric photograph at ant-eye scale
+        vec3 colA = sampleSeamlessFS(uTexA, vTexUv);
+        vec3 colB = sampleSeamlessFS(uTexB, vTexUv);
+        vec3 texCol = mix(colA, colB, vMorphMask);
 
-        // Multi-tone yarn melange: blend between midCol and altCol per fiber seed
-        float toneMix = fract(vSeed * 7.13);
-        vec3 shaftCol = mix(uMidCol, uAltCol, toneMix);
+        // Estimate 3D micro-tuft normal from neighboring texels for velvet rim sheen
+        float eps = 0.0045;
+        vec3 cx = mix(sampleSeamlessFS(uTexA, vTexUv + vec2(eps, 0.0)), sampleSeamlessFS(uTexB, vTexUv + vec2(eps, 0.0)), vMorphMask);
+        vec3 cy = mix(sampleSeamlessFS(uTexA, vTexUv + vec2(0.0, eps)), sampleSeamlessFS(uTexB, vTexUv + vec2(0.0, eps)), vMorphMask);
+        float dx = dot(cx - texCol, vec3(0.333));
+        float dy = dot(cy - texCol, vec3(0.333));
+        vec3 normal = normalize(vec3(-dx * 4.5, 1.0, -dy * 4.5));
 
-        // Fine micro-fibril silk ridges along the length of each fiber
-        float microSheen = 0.96 + 0.04 * sin(vS * 55.0 + vSeed * 25.0);
+        // Soft studio lighting + Kajiya-Kay velvet rim highlight on tuft crests
+        vec3 lightDir = normalize(vec3(0.38, 0.78, -0.48));
+        float diff = max(0.0, dot(normal, lightDir));
+        float rim = pow(clamp(1.0 - normal.y, 0.0, 1.0), 1.45);
 
-        // Rich 3-stage color gradient from deep knit root -> multi-tone shaft -> luminous tip
-        vec3 baseCol = mix(uRootCol, shaftCol, smoothstep(0.0, 0.42, vS));
-        baseCol = mix(baseCol, uTipCol, smoothstep(0.45, 0.98, vS));
-        baseCol *= microSheen * (0.92 + 0.16 * vSeed);
+        // Deepen crevice shadows slightly and brighten plush tuft tops for 3D pop
+        float ao = mix(0.76, 1.18, vRelief);
+        vec3 lit = texCol * (0.76 + 0.42 * diff) * ao;
+        lit += uRimCol * rim * (0.24 + 0.32 * vRelief + 0.25 * uWarp);
+        lit += uRimCol * max(0.0, vWaveSlope) * 0.14;
 
-        // Dual directional lighting + Kajiya-Kay velvet rim & iridescent sheen
-        vec3 light1 = normalize(vec3(0.45, 0.65, 0.61));
-        vec3 light2 = normalize(vec3(-0.55, 0.35, 0.75));
-        float diff1 = max(0.0, dot(normal, light1));
-        float diff2 = max(0.0, dot(normal, light2));
-        float rim = pow(1.0 - nz, 1.85);
-        float spec = pow(max(0.0, dot(normal, normalize(vec3(0.15, 0.58, 0.80)))), 18.0);
+        // Magical glowing wave crest during fabric-to-fabric warp
+        float warpBand = 4.0 * vMorphMask * (1.0 - vMorphMask);
+        lit += uRimCol * warpBand * uWarp * 0.35;
 
-        // Root ambient occlusion near the knitted backing
-        float ao = smoothstep(0.0, 0.24, vS) * 0.82 + 0.18;
-
-        vec3 col = baseCol * (0.48 + 0.52 * diff1 + 0.22 * diff2) * ao;
-        col = mix(col, uRimCol, rim * (0.48 + 0.38 * vS));
-        col += uRimCol * spec * (0.30 + 0.35 * uWarp);
-
-        // Iridescent micro-shimmer near fiber tips
-        vec3 iri = 0.5 + 0.5 * cos(6.28318 * (vSeed + vS * 0.5 + uTime * 0.08 + vec3(0.0, 0.33, 0.67)));
-        col += iri * rim * vS * 0.11;
-
-        // Atmospheric depth fog into the forest horizon
-        float fog = smoothstep(0.06, 0.96, vDepth);
-        vec3 fogCol = uSkyCol + uRimCol * (0.04 + 0.07 * uWarp);
-        col = mix(col, fogCol, fog * 0.92);
-
-        gl_FragColor = vec4(col, 1.0);
+        // Gentle atmospheric distance fog at the very top horizon
+        float fog = smoothstep(0.45, 1.0, vDepth) * 0.62;
+        gl_FragColor = vec4(mix(lit, uSkyCol, fog), 1.0);
       }
     `;
 
@@ -603,47 +537,28 @@
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
 
-    // 1,350 slender 3D fibers × 32 smooth segments each = 259,200 vertices
-    const COLS = 45;
-    const ROWS = 30;
-    const FIBER_COUNT = COLS * ROWS;
-    const SEGS = 32;
-    const FLOATS_PER_VERT = 5;
-    const verts = new Float32Array(FIBER_COUNT * SEGS * 6 * FLOATS_PER_VERT);
-
-    let ptr = 0;
-    function pushVert(rx, rz, s, side, seed) {
-      verts[ptr++] = rx;
-      verts[ptr++] = rz;
-      verts[ptr++] = s;
-      verts[ptr++] = side;
-      verts[ptr++] = seed;
+    // Build 120 × 120 subdivided 3D cloth grid (28,800 triangles)
+    const NX = 120;
+    const NZ = 120;
+    const verts = new Float32Array(NX * NZ * 6 * 2);
+    let p = 0;
+    function push(x, y) {
+      verts[p++] = x;
+      verts[p++] = y;
     }
+    for (let j = 0; j < NZ; j++) {
+      const y0 = j / NZ;
+      const y1 = (j + 1) / NZ;
+      for (let i = 0; i < NX; i++) {
+        const x0 = (i / NX) * 2.0 - 1.0;
+        const x1 = ((i + 1) / NX) * 2.0 - 1.0;
+        push(x0, y0);
+        push(x1, y0);
+        push(x0, y1);
 
-    let rng = 1337;
-    function rand() {
-      rng = (rng * 16807) % 2147483647;
-      return (rng - 1) / 2147483646;
-    }
-
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const u = (c + (rand() - 0.5) * 0.85) / COLS;
-        const rootX = (u - 0.45) * 18.5;
-        const rootZ = (r + (rand() - 0.5) * 0.85) * (22.0 / ROWS);
-        const seed = rand();
-
-        for (let seg = 0; seg < SEGS; seg++) {
-          const s0 = seg / SEGS;
-          const s1 = (seg + 1) / SEGS;
-          pushVert(rootX, rootZ, s0, -1, seed);
-          pushVert(rootX, rootZ, s0,  1, seed);
-          pushVert(rootX, rootZ, s1, -1, seed);
-
-          pushVert(rootX, rootZ, s1, -1, seed);
-          pushVert(rootX, rootZ, s0,  1, seed);
-          pushVert(rootX, rootZ, s1,  1, seed);
-        }
+        push(x0, y1);
+        push(x1, y0);
+        push(x1, y1);
       }
     }
 
@@ -651,39 +566,59 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
 
-    const aFiber = gl.getAttribLocation(prog, 'aFiber');
-    const aSeed  = gl.getAttribLocation(prog, 'aSeed');
-    const stride = FLOATS_PER_VERT * 4;
-    gl.enableVertexAttribArray(aFiber);
-    gl.vertexAttribPointer(aFiber, 4, gl.FLOAT, false, stride, 0);
-    gl.enableVertexAttribArray(aSeed);
-    gl.vertexAttribPointer(aSeed, 1, gl.FLOAT, false, stride, 16);
+    const aGrid = gl.getAttribLocation(prog, 'aGrid');
+    gl.enableVertexAttribArray(aGrid);
+    gl.vertexAttribPointer(aGrid, 2, gl.FLOAT, false, 0, 0);
+
+    // Load all 6 real studio macro fabric textures
+    let texturesReady = 0;
+    let fileProtocolBlocked = false;
+    const textures = FABRIC_WORLDS.map((fw) => {
+      const tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      // 1x1 warm neutral placeholder until image loads
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([180, 165, 145, 255]));
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          gl.bindTexture(gl.TEXTURE_2D, tex);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+          texturesReady++;
+        } catch (_) {
+          // If opened via local file:// protocol where WebGL blocks texture upload,
+          // hide the WebGL canvas so the 3D-animated #hero-img shows the real macro photo!
+          fileProtocolBlocked = true;
+          canvas.classList.remove('is-ready');
+        }
+      };
+      img.src = fw.img;
+      return tex;
+    });
 
     const uLoc = {
+      texA:      gl.getUniformLocation(prog, 'uTexA'),
+      texB:      gl.getUniformLocation(prog, 'uTexB'),
+      morph:     gl.getUniformLocation(prog, 'uMorph'),
       time:      gl.getUniformLocation(prog, 'uTime'),
       camZ:      gl.getUniformLocation(prog, 'uCamZ'),
       aspect:    gl.getUniformLocation(prog, 'uAspect'),
       mouse:     gl.getUniformLocation(prog, 'uMouse'),
       mode:      gl.getUniformLocation(prog, 'uMode'),
       warp:      gl.getUniformLocation(prog, 'uWarp'),
-      height:    gl.getUniformLocation(prog, 'uHeight'),
-      radius:    gl.getUniformLocation(prog, 'uRadius'),
-      curlAmp:   gl.getUniformLocation(prog, 'uCurlAmp'),
-      curlTurns: gl.getUniformLocation(prog, 'uCurlTurns'),
-      arch:      gl.getUniformLocation(prog, 'uArch'),
-      domeAmp:   gl.getUniformLocation(prog, 'uDomeAmp'),
-      swayAmp:   gl.getUniformLocation(prog, 'uSwayAmp'),
-      rootCol:   gl.getUniformLocation(prog, 'uRootCol'),
-      midCol:    gl.getUniformLocation(prog, 'uMidCol'),
-      altCol:    gl.getUniformLocation(prog, 'uAltCol'),
-      tipCol:    gl.getUniformLocation(prog, 'uTipCol'),
+      reliefAmp: gl.getUniformLocation(prog, 'uReliefAmp'),
+      waveAmp:   gl.getUniformLocation(prog, 'uWaveAmp'),
+      texScale:  gl.getUniformLocation(prog, 'uTexScale'),
       rimCol:    gl.getUniformLocation(prog, 'uRimCol'),
       skyCol:    gl.getUniformLocation(prog, 'uSkyCol')
     };
 
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
-    gl.disable(gl.BLEND); // Pure hardware depth occlusion eliminates alpha Z-fighting
 
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
@@ -700,8 +635,7 @@
 
     const cur = JSON.parse(JSON.stringify(FABRIC_WORLDS[0]));
     let modeVal = 0;
-    const totalVerts = FIBER_COUNT * SEGS * 6;
-
+    const totalVerts = NX * NZ * 6;
     const lerp = (a, b, k) => a + (b - a) * k;
     const lerp3 = (arr, target, k) => {
       arr[0] = lerp(arr[0], target[0], k);
@@ -709,158 +643,59 @@
       arr[2] = lerp(arr[2], target[2], k);
     };
 
-    return function renderForest(timeSec, dt) {
+    return function renderTerrain(timeSec, dt) {
+      if (fileProtocolBlocked || texturesReady === 0) return;
       if (flowState.scrollY > window.innerHeight * 1.35) return;
 
       const target = FABRIC_WORLDS[flowState.fabricIdx] || FABRIC_WORLDS[0];
-      const morphSpeed = 0.075;
+      const morphSpeed = 0.08;
 
-      cur.height    = lerp(cur.height, target.height, morphSpeed);
-      cur.radius    = lerp(cur.radius, target.radius, morphSpeed);
-      cur.curlAmp   = lerp(cur.curlAmp, target.curlAmp, morphSpeed);
-      cur.curlTurns = lerp(cur.curlTurns, target.curlTurns, morphSpeed);
-      cur.arch      = lerp(cur.arch, target.arch, morphSpeed);
-      cur.domeAmp   = lerp(cur.domeAmp, target.domeAmp, morphSpeed);
-      cur.swayAmp   = lerp(cur.swayAmp, target.swayAmp, morphSpeed);
-
-      lerp3(cur.rootCol, target.rootCol, morphSpeed);
-      lerp3(cur.midCol,  target.midCol,  morphSpeed);
-      lerp3(cur.altCol,  target.altCol,  morphSpeed);
-      lerp3(cur.tipCol,  target.tipCol,  morphSpeed);
-      lerp3(cur.rimCol,  target.rimCol,  morphSpeed);
-      lerp3(cur.skyCol,  target.skyCol,  morphSpeed);
+      flowState.morphProg = Math.min(1.0, flowState.morphProg + dt * 1.8);
+      cur.reliefAmp = lerp(cur.reliefAmp, target.reliefAmp, morphSpeed);
+      cur.waveAmp   = lerp(cur.waveAmp,   target.waveAmp,   morphSpeed);
+      cur.texScale  = lerp(cur.texScale,  target.texScale,  morphSpeed);
+      lerp3(cur.rimCol, target.rimCol, morphSpeed);
+      lerp3(cur.skyCol, target.skyCol, morphSpeed);
 
       const targetMode = flowState.mode === 'sky' ? 1.0 : 0.0;
       modeVal = lerp(modeVal, targetMode, 0.05);
 
-      const baseSpeed = flowState.mode === 'sky' ? 1.25 : 0.72;
-      const warpSpeed = flowState.warpPulse * 11.5;
-      flowState.camZ = (flowState.camZ + (baseSpeed + warpSpeed) * dt) % 22.0;
+      const baseSpeed = flowState.mode === 'sky' ? 1.15 : 0.65;
+      const warpSpeed = flowState.warpPulse * 9.5;
+      flowState.camZ = (flowState.camZ + (baseSpeed + warpSpeed) * dt) % 100.0;
       flowState.warpPulse *= 0.93;
 
-      gl.clearColor(cur.skyCol[0], cur.skyCol[1], cur.skyCol[2], 0.88);
+      gl.clearColor(cur.skyCol[0], cur.skyCol[1], cur.skyCol[2], 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.useProgram(prog);
 
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, textures[flowState.prevIdx] || textures[0]);
+      gl.uniform1i(uLoc.texA, 0);
+
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, textures[flowState.fabricIdx] || textures[0]);
+      gl.uniform1i(uLoc.texB, 1);
+
+      gl.uniform1f(uLoc.morph, flowState.morphProg);
       gl.uniform1f(uLoc.time, timeSec);
       gl.uniform1f(uLoc.camZ, flowState.camZ);
       gl.uniform1f(uLoc.aspect, Math.max(0.5, canvas.width / Math.max(1, canvas.height)));
       gl.uniform2f(uLoc.mouse, flowState.mouseX, flowState.mouseY);
       gl.uniform1f(uLoc.mode, modeVal);
       gl.uniform1f(uLoc.warp, flowState.warpPulse);
-
-      gl.uniform1f(uLoc.height, cur.height);
-      gl.uniform1f(uLoc.radius, cur.radius);
-      gl.uniform1f(uLoc.curlAmp, cur.curlAmp);
-      gl.uniform1f(uLoc.curlTurns, cur.curlTurns);
-      gl.uniform1f(uLoc.arch, cur.arch);
-      gl.uniform1f(uLoc.domeAmp, cur.domeAmp);
-      gl.uniform1f(uLoc.swayAmp, cur.swayAmp);
-
-      gl.uniform3fv(uLoc.rootCol, cur.rootCol);
-      gl.uniform3fv(uLoc.midCol,  cur.midCol);
-      gl.uniform3fv(uLoc.altCol,  cur.altCol);
-      gl.uniform3fv(uLoc.tipCol,  cur.tipCol);
-      gl.uniform3fv(uLoc.rimCol,  cur.rimCol);
-      gl.uniform3fv(uLoc.skyCol,  cur.skyCol);
+      gl.uniform1f(uLoc.reliefAmp, cur.reliefAmp);
+      gl.uniform1f(uLoc.waveAmp, cur.waveAmp);
+      gl.uniform1f(uLoc.texScale, cur.texScale);
+      gl.uniform3fv(uLoc.rimCol, cur.rimCol);
+      gl.uniform3fv(uLoc.skyCol, cur.skyCol);
 
       gl.drawArrays(gl.TRIANGLES, 0, totalVerts);
     };
   }
 
   /* ==========================================================================
-     3. FULL-VIEWPORT 3D FLOATING FIBER & SEA/SKY CURRENT FIELD
-     ========================================================================== */
-  function initAmbient3DField() {
-    const canvas = $('#ambient-canvas');
-    if (!canvas) return null;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    let w = 0, h = 0;
-    function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      w = window.innerWidth;
-      h = window.innerHeight;
-      canvas.width = Math.floor(w * dpr);
-      canvas.height = Math.floor(h * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    resize();
-    window.addEventListener('resize', resize, { passive: true });
-
-    const COUNT = 46;
-    const motes = Array.from({ length: COUNT }, (_, i) => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      z: 0.2 + (i / COUNT) * 0.8,
-      angle: Math.random() * Math.PI * 2,
-      spin: (Math.random() - 0.5) * 0.7,
-      phase: Math.random() * Math.PI * 2,
-      len: 12 + Math.random() * 22,
-      hueType: i % 3
-    }));
-
-    return function renderAmbient(t) {
-      ctx.clearRect(0, 0, w, h);
-      const isSky = flowState.mode === 'sky';
-      const windX = (flowState.mouseX - 0.5) * (isSky ? 1.4 : 0.7);
-      const scrollBoost = flowState.scrollVel * 0.32;
-      const warpStreak = flowState.warpPulse * 14;
-
-      for (let i = 0; i < motes.length; i++) {
-        const m = motes[i];
-        const depth = m.z;
-
-        const vx = isSky
-          ? (0.45 + Math.sin(t * 0.7 + m.phase) * 0.35 + windX * 1.6) * depth
-          : (Math.sin(t * 0.55 + m.phase) * 0.48 + windX * 0.9) * depth;
-
-        const vy = isSky
-          ? (-0.42 + Math.cos(t * 0.8 + m.phase) * 0.25) * depth - scrollBoost * depth + warpStreak * depth
-          : (-0.18 + Math.sin(t * 0.65 + m.phase * 1.3) * 0.32) * depth - scrollBoost * depth * 0.7 + warpStreak * depth;
-
-        m.x += vx;
-        m.y += vy;
-        m.angle += m.spin * 0.012 + (isSky ? 0.008 : 0.004) * Math.sin(t + m.phase);
-
-        if (m.x < -40) m.x = w + 40;
-        if (m.x > w + 40) m.x = -40;
-        if (m.y < -40) m.y = h + 40;
-        if (m.y > h + 40) m.y = -40;
-
-        const alpha = (0.15 + depth * 0.24) * (0.75 + 0.25 * Math.sin(t * 1.4 + m.phase));
-        ctx.save();
-        ctx.translate(m.x, m.y);
-        ctx.rotate(m.angle);
-
-        const len = (m.len + warpStreak * 2.5) * depth;
-        const bow = Math.sin(t * 1.8 + m.phase) * (5.5 * depth);
-
-        ctx.beginPath();
-        ctx.moveTo(-len * 0.5, 0);
-        ctx.quadraticCurveTo(0, bow, len * 0.5, 0);
-
-        if (m.hueType === 1) {
-          ctx.strokeStyle = `rgba(255, 74, 43, ${alpha * 1.15})`;
-        } else if (m.hueType === 2) {
-          ctx.strokeStyle = isSky
-            ? `rgba(255, 217, 207, ${alpha})`
-            : `rgba(140, 210, 245, ${alpha})`;
-        } else {
-          ctx.strokeStyle = `rgba(180, 172, 160, ${alpha})`;
-        }
-
-        ctx.lineWidth = Math.max(1, 1.9 * depth);
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        ctx.restore();
-      }
-    };
-  }
-
-  /* ==========================================================================
-     4. 3D BUOYANCY, SCROLL-FLIGHT INERTIA & MAGNETIC 3D CARD TILT
+     3. 3D BUOYANCY, SCROLL-FLIGHT INERTIA & MAGNETIC 3D CARD TILT
      ========================================================================== */
   function initSpatial3DCards() {
     const heroContent = $('.hero__content');
@@ -929,14 +764,22 @@
       const freq = isSky ? 1.35 : 0.95;
 
       if (heroContent && flowState.scrollY < window.innerHeight) {
-        const hx = (flowState.mouseX - 0.5) * -16;
-        const hy = (flowState.mouseY - 0.5) * -12 + Math.sin(t * freq) * 5;
-        const hrx = (0.5 - flowState.mouseY) * 4.0 + Math.cos(t * 0.8) * 1.0;
-        const hry = (flowState.mouseX - 0.5) * 5.0 + Math.sin(t * 0.7) * 1.2;
+        const hx = (flowState.mouseX - 0.5) * -14;
+        const hy = (flowState.mouseY - 0.5) * -10 + Math.sin(t * freq) * 4;
+        const hrx = (0.5 - flowState.mouseY) * 3.5 + Math.cos(t * 0.8) * 0.8;
+        const hry = (flowState.mouseX - 0.5) * 4.5 + Math.sin(t * 0.7) * 1.0;
         heroContent.style.setProperty('--hx', `${hx.toFixed(2)}px`);
         heroContent.style.setProperty('--hy', `${hy.toFixed(2)}px`);
         heroContent.style.setProperty('--hrx', `${hrx.toFixed(2)}deg`);
         heroContent.style.setProperty('--hry', `${hry.toFixed(2)}deg`);
+
+        // 3D fallback animation on #hero-img when opened via file://
+        if (heroImgEl) {
+          const ix = (flowState.mouseX - 0.5) * 28 + Math.sin(t * freq * 0.8) * 12;
+          const iy = (flowState.mouseY - 0.5) * 18 + Math.cos(t * freq * 0.7) * 8;
+          const scale = 1.18 + flowState.warpPulse * 0.14;
+          heroImgEl.style.transform = `perspective(900px) scale(${scale.toFixed(3)}) translate3d(${ix.toFixed(1)}px, ${iy.toFixed(1)}px, 0) rotateX(${(4 + (0.5 - flowState.mouseY) * 6).toFixed(2)}deg) rotateY(${((flowState.mouseX - 0.5) * 6).toFixed(2)}deg)`;
+        }
       }
 
       const scrollPitch = Math.max(-7, Math.min(7, flowState.scrollVel * 0.18));
@@ -965,10 +808,9 @@
   }
 
   /* ==========================================================================
-     5. UNIFIED 60FPS ANIMATION LOOP
+     4. UNIFIED 60FPS ANIMATION LOOP
      ========================================================================== */
-  const renderForest = initMicroForestWebGL();
-  const renderAmbient = initAmbient3DField();
+  const renderTerrain = initMacroFabricTerrainWebGL();
   const updateSpatial3D = initSpatial3DCards();
 
   let lastTime = performance.now() * 0.001;
@@ -988,8 +830,7 @@
     flowState.scrollVel += (rawDelta - flowState.scrollVel) * 0.15;
     flowState.scrollVel *= 0.92;
 
-    if (renderForest) renderForest(t, dt);
-    if (renderAmbient) renderAmbient(t);
+    if (renderTerrain) renderTerrain(t, dt);
     if (updateSpatial3D) updateSpatial3D(t);
 
     requestAnimationFrame(tick);
