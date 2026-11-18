@@ -444,12 +444,12 @@
         float wx = rootX + swayX + curlX + archX;
         float wz = worldZ + swayZ + curlZ + archZ;
 
-        // Interactive cursor wind-parting sphere
+        // Smooth continuous radial wind-parting around cursor (zero step discontinuity)
         float cursorX = (uMouse.x - 0.5) * 10.0;
         float dx = wx - cursorX;
         float dz = wz - 5.5;
-        float push = exp(-(dx * dx + dz * dz) * 0.20) * smoothS * 1.15;
-        wx += sign(dx + 0.001) * push;
+        float push = exp(-(dx * dx + dz * dz) * 0.22) * smoothS * 1.10;
+        wx += (dx / (0.55 + abs(dx))) * push;
 
         float h = uHeight * (0.86 + 0.28 * seed);
         float wy = dome + s * h;
