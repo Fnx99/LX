@@ -22,97 +22,97 @@
     {
       name: '01 — Play Boa · Curled Bouclé Forest',
       // Towering helical curly loops in warm cream/ivory
-      height: 3.15,
-      radius: 0.135,
-      curlAmp: 0.50,
-      curlTurns: 12.0,
-      arch: 0.22,
-      domeAmp: 0.05,
-      swayAmp: 0.34,
-      rootCol: [0.16, 0.13, 0.10],
-      midCol:  [0.78, 0.71, 0.60],
-      tipCol:  [0.98, 0.95, 0.88],
-      rimCol:  [1.00, 0.82, 0.58],
-      skyCol:  [0.07, 0.06, 0.05]
+      height: 3.35,
+      radius: 0.115,
+      curlAmp: 0.34,
+      curlTurns: 6.4,
+      arch: 0.25,
+      domeAmp: 0.06,
+      swayAmp: 0.32,
+      rootCol: [0.22, 0.18, 0.14],
+      midCol:  [0.84, 0.77, 0.66],
+      tipCol:  [0.99, 0.96, 0.90],
+      rimCol:  [1.00, 0.88, 0.70],
+      skyCol:  [0.06, 0.05, 0.05]
     },
     {
       name: '02 — PV Plush · Velvet Pillar Cathedral',
       // Tall, dense, straight velvet columns in dusty rose with silk sheen
-      height: 3.55,
-      radius: 0.102,
-      curlAmp: 0.045,
+      height: 3.65,
+      radius: 0.095,
+      curlAmp: 0.05,
       curlTurns: 2.2,
-      arch: 0.16,
+      arch: 0.22,
       domeAmp: 0.0,
       swayAmp: 0.42,
-      rootCol: [0.17, 0.07, 0.10],
-      midCol:  [0.72, 0.43, 0.49],
-      tipCol:  [0.96, 0.76, 0.81],
-      rimCol:  [1.00, 0.85, 0.90],
-      skyCol:  [0.08, 0.04, 0.06]
+      rootCol: [0.20, 0.09, 0.12],
+      midCol:  [0.76, 0.47, 0.53],
+      tipCol:  [0.97, 0.79, 0.84],
+      rimCol:  [1.00, 0.88, 0.92],
+      skyCol:  [0.07, 0.04, 0.05]
     },
     {
       name: '03 — Velboa · Low Sculpted Plush Meadow',
       // Compact, stout, smooth honey-caramel plush stalks
-      height: 2.05,
-      radius: 0.155,
-      curlAmp: 0.035,
+      height: 2.15,
+      radius: 0.14,
+      curlAmp: 0.04,
       curlTurns: 1.5,
-      arch: 0.08,
+      arch: 0.10,
       domeAmp: 0.0,
       swayAmp: 0.22,
-      rootCol: [0.19, 0.11, 0.04],
-      midCol:  [0.72, 0.48, 0.23],
-      tipCol:  [0.95, 0.75, 0.48],
-      rimCol:  [1.00, 0.88, 0.64],
-      skyCol:  [0.08, 0.05, 0.03]
+      rootCol: [0.22, 0.13, 0.05],
+      midCol:  [0.76, 0.52, 0.26],
+      tipCol:  [0.96, 0.78, 0.52],
+      rimCol:  [1.00, 0.90, 0.68],
+      skyCol:  [0.07, 0.05, 0.03]
     },
     {
       name: '04 — Minky / Super Soft · Silky Dimple-Dome Valley',
       // Rolling 3D raised Minky dimple hills with ultra-fine sage micro-filaments
-      height: 2.35,
-      radius: 0.086,
-      curlAmp: 0.07,
-      curlTurns: 3.2,
-      arch: 0.28,
-      domeAmp: 0.88,
+      height: 2.45,
+      radius: 0.082,
+      curlAmp: 0.08,
+      curlTurns: 3.0,
+      arch: 0.30,
+      domeAmp: 0.85,
       swayAmp: 0.38,
-      rootCol: [0.07, 0.13, 0.09],
-      midCol:  [0.42, 0.56, 0.45],
-      tipCol:  [0.76, 0.88, 0.78],
-      rimCol:  [0.88, 0.98, 0.90],
-      skyCol:  [0.04, 0.07, 0.05]
+      rootCol: [0.09, 0.16, 0.11],
+      midCol:  [0.46, 0.60, 0.49],
+      tipCol:  [0.80, 0.91, 0.82],
+      rimCol:  [0.90, 0.99, 0.92],
+      skyCol:  [0.04, 0.06, 0.05]
     },
     {
       name: '05 — Faux Fur · Towering Long-Pile Redwood Jungle',
       // Colossal, sweeping long-pile fur shafts arching overhead
-      height: 4.45,
-      radius: 0.095,
-      curlAmp: 0.11,
-      curlTurns: 2.5,
-      arch: 1.15,
+      height: 4.55,
+      radius: 0.088,
+      curlAmp: 0.10,
+      curlTurns: 2.4,
+      arch: 1.18,
       domeAmp: 0.0,
       swayAmp: 0.62,
-      rootCol: [0.15, 0.11, 0.08],
-      midCol:  [0.68, 0.57, 0.45],
-      tipCol:  [0.97, 0.91, 0.83],
-      rimCol:  [1.00, 0.95, 0.85],
-      skyCol:  [0.07, 0.05, 0.04]
+      rootCol: [0.18, 0.14, 0.10],
+      midCol:  [0.72, 0.61, 0.49],
+      tipCol:  [0.98, 0.93, 0.85],
+      rimCol:  [1.00, 0.96, 0.88],
+      skyCol:  [0.06, 0.05, 0.04]
     },
     {
       name: '06 — Polar Fleece · Brushed Thermal Cloud Labyrinth',
       // Interwoven brushed navy & ice-blue thermal loops
-      height: 2.80,
-      radius: 0.132,
-      curlAmp: 0.44,
-      curlTurns: 7.5,
-      arch: 0.68,
+      height: 2.95,
+      radius: 0.115,
+      curlAmp: 0.32,
+      curlTurns: 5.2,
+      arch: 0.62,
       domeAmp: 0.25,
       swayAmp: 0.36,
-      rootCol: [0.04, 0.08, 0.16],
-      midCol:  [0.16, 0.30, 0.54],
-      tipCol:  [0.50, 0.70, 0.95],
-      rimCol:  [0.72, 0.86, 1.00],
+      rootCol: [0.05, 0.10, 0.20],
+      midCol:  [0.20, 0.36, 0.62],
+      tipCol:  [0.56, 0.76, 0.98],
+      rimCol:  [0.78, 0.90, 1.00],
       skyCol:  [0.03, 0.05, 0.09]
     }
   ];
@@ -622,20 +622,19 @@
         float spec = pow(max(0.0, dot(normal, normalize(vec3(-0.25, 0.55, 0.80)))), 14.0);
 
         // Root ambient occlusion at the knit floor
-        float ao = smoothstep(0.0, 0.22, vS) * 0.78 + 0.22;
+        float ao = smoothstep(0.0, 0.25, vS) * 0.80 + 0.20;
 
-        vec3 col = baseCol * (0.38 + 0.72 * diff) * ao;
-        col += uRimCol * rim * (0.42 + 0.35 * vS);
-        col += uRimCol * spec * (0.28 + 0.35 * uWarp);
+        // Plush subsurface scattering & luminous velvet rim (no dark cartoon outlines!)
+        vec3 col = baseCol * (0.52 + 0.58 * diff) * ao;
+        col = mix(col, uRimCol, rim * (0.55 + 0.35 * vS));
+        col += uRimCol * spec * (0.32 + 0.38 * uWarp);
 
         // Blend into deep atmospheric forest horizon fog
-        float fog = smoothstep(0.04, 0.98, vDepth);
+        float fog = smoothstep(0.02, 0.96, vDepth);
         vec3 fogCol = uSkyCol + uRimCol * (0.04 + 0.08 * uWarp);
-        col = mix(col, fogCol, fog * 0.88);
+        col = mix(col, fogCol, fog * 0.92);
 
-        // Soft anti-aliased edge on each 3D cylinder strand
-        float alpha = smoothstep(1.0, 0.72, abs(vSide)) * (1.0 - fog * 0.65);
-        gl_FragColor = vec4(col, alpha * 0.92);
+        gl_FragColor = vec4(col, 1.0);
       }
     `;
 
@@ -657,9 +656,9 @@
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
 
-    // Build 520 3D multi-segment fibers sorted back-to-front or depth-tested
+    // Build 520 3D multi-segment fibers with 28 smooth segments per fiber
     const FIBER_COUNT = 520;
-    const SEGS = 12; // 12 segments along each 3D fiber trunk
+    const SEGS = 28;
     const FLOATS_PER_VERT = 5; // rootX, rootZ, s, side, seed
     const verts = new Float32Array(FIBER_COUNT * SEGS * 6 * FLOATS_PER_VERT);
 
