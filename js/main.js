@@ -430,20 +430,19 @@
         float swayX = sin(windPhase) * uSwayAmp * smoothS;
         float swayZ = cos(windPhase * 0.85) * (uSwayAmp * 0.5) * smoothS;
 
-        // Smooth 3D bouclé spiral curl (gentle radius so loops never self-intersect)
-        float curlAngle = s * uCurlTurns + seed * 6.28318 + uTime * 0.5;
+        // Smooth 3D bouclé spiral wave (monotonic in Y so ribbons never flip or twist)
+        float curlAngle = s * uCurlTurns + seed * 6.28318 + uTime * 0.55;
         float curlEnv = sin(s * 3.14159) * smoothS;
         float curlX = cos(curlAngle) * uCurlAmp * curlEnv;
         float curlZ = sin(curlAngle) * (uCurlAmp * 0.65) * curlEnv;
-        float curlY = sin(curlAngle) * (uCurlAmp * 0.22) * curlEnv;
 
         // Sweeping fur arch
         float archAngle = (seed - 0.5) * 2.2;
         float archX = sin(archAngle) * uArch * smoothS * s;
         float archZ = cos(archAngle) * (uArch * 0.35) * smoothS * s;
 
-        float wx = rootX + (swayX + curlX + archX) * env;
-        float wz = worldZ + (swayZ + curlZ + archZ) * env;
+        float wx = rootX + swayX + curlX + archX;
+        float wz = worldZ + swayZ + curlZ + archZ;
 
         // Interactive cursor wind-parting sphere
         float cursorX = (uMouse.x - 0.5) * 10.0;
@@ -452,15 +451,15 @@
         float push = exp(-(dx * dx + dz * dz) * 0.20) * smoothS * 1.15;
         wx += sign(dx + 0.001) * push;
 
-        float h = uHeight * (0.86 + 0.28 * seed) * env;
-        float wy = dome + s * h + curlY * env;
+        float h = uHeight * (0.86 + 0.28 * seed);
+        float wy = dome + s * h;
 
         // Camera slightly higher & wider so fibers look delicate, refined & dense
         float camX = (uMouse.x - 0.5) * 2.2;
-        float camY = 1.42 + (0.5 - uMouse.y) * 0.45;
+        float camY = 1.48 + (0.5 - uMouse.y) * 0.40;
         vec3 rel = vec3(wx - camX, wy - camY, wz);
 
-        float pitch = 0.04 + (0.5 - uMouse.y) * 0.10;
+        float pitch = 0.03 + (0.5 - uMouse.y) * 0.08;
         float cp = cos(pitch), sp = sin(pitch);
         return vec3(
           rel.x,
@@ -475,44 +474,43 @@
         float s     = aFiber.z;
         float side  = aFiber.w;
 
-        // Infinite wrapping Z corridor [1.8 .. 23.8] with smooth fade-in/out envelope
+        // Infinite wrapping Z corridor [2.2 .. 24.2] with smooth fade-in/out envelope
         float spanZ = 22.0;
         float zRel = mod(rawZ - uCamZ, spanZ);
         if (zRel < 0.0) zRel += spanZ;
-        float worldZ = zRel + 1.8;
+        float worldZ = zRel + 2.2;
 
-        // Envelope smoothly grows fibers from 0 at far horizon & near plane (zero popping!)
-        float env = smoothstep(0.0, 2.4, zRel) * smoothstep(spanZ, spanZ - 3.5, zRel);
+        // Envelope smoothly tapers fiber thickness to 0 at far horizon & near plane (zero popping!)
+        float env = smoothstep(0.2, 2.8, zRel) * smoothstep(spanZ, spanZ - 3.8, zRel);
+        if (env <= 0.01) {
+          gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+          return;
+        }
 
         vec3 p0 = evalSpine(rootX, rawZ, worldZ, env, s, aSeed);
-        vec3 p1 = evalSpine(rootX, rawZ, worldZ, env, min(1.0, s + 0.03), aSeed);
-        vec3 pPrev = evalSpine(rootX, rawZ, worldZ, env, max(0.0, s - 0.03), aSeed);
+        vec3 p1 = evalSpine(rootX, rawZ, worldZ, env, min(1.0, s + 0.035), aSeed);
 
-        float fov = 1.75 - uWarp * 0.22;
-        float z0 = max(0.8, p0.z);
-        float z1 = max(0.8, p1.z);
-        float zP = max(0.8, pPrev.z);
-
-        // 2D screen-space positions for true perpendicular tangent-normal extrusion
-        vec2 s0 = vec2((p0.x * fov) / (z0 * uAspect), (p0.y * fov) / z0);
-        vec2 sNext = vec2((p1.x * fov) / (z1 * uAspect), (p1.y * fov) / z1);
-        vec2 sPrev = vec2((pPrev.x * fov) / (zP * uAspect), (pPrev.y * fov) / zP);
-
-        vec2 tang = (sNext - sPrev) * vec2(uAspect, 1.0);
-        float tLen = length(tang);
-        vec2 dir = tLen > 0.0001 ? (tang / tLen) : vec2(0.0, 1.0);
-        vec2 perp = vec2(-dir.y / uAspect, dir.x);
+        // Clamp slope so the ribbon normal is always smooth and never flips 180 deg
+        float dx = p1.x - p0.x;
+        float dy = max(0.025, abs(p1.y - p0.y));
+        float slope = clamp(dx / dy, -0.65, 0.65);
+        vec2 norm2d = normalize(vec2(1.0, -slope * 0.45));
 
         // Smooth root-to-tip taper + soft rounded tip cap
-        float tipCap = sqrt(max(0.0, 1.0 - pow(s, 3.2)));
-        float taper = mix(1.0, 0.32, s) * tipCap;
-        float screenRad = (uRadius * taper * env * fov) / z0;
+        float tipCap = sqrt(max(0.0, 1.0 - pow(s, 3.0)));
+        float taper = mix(1.0, 0.28, s) * tipCap;
+        float rad = uRadius * taper * env;
 
-        vec2 finalNdc = s0 + perp * (side * screenRad);
+        p0.x += side * rad * norm2d.x;
+        p0.y += side * rad * norm2d.y;
 
-        // Proper homogeneous perspective depth (near = 0.8, far = 25.0) + per-fiber micro-offset
-        float near = 0.8;
-        float far = 25.0;
+        float fov = 1.78 - uWarp * 0.22;
+        float z0 = max(1.2, p0.z);
+        vec2 finalNdc = vec2((p0.x * fov) / (z0 * uAspect), (p0.y * fov) / z0);
+
+        // Proper homogeneous perspective depth (near = 1.0, far = 26.0) + per-fiber micro-offset
+        float near = 1.0;
+        float far = 26.0;
         float zAdj = z0 + aSeed * 0.015;
         float ndcZ = ((far + near) / (far - near)) - (2.0 * far * near) / ((far - near) * zAdj);
 
@@ -520,7 +518,7 @@
 
         vS = s;
         vSide = side;
-        vDepth = clamp((z0 - 1.8) / 21.0, 0.0, 1.0);
+        vDepth = clamp((z0 - 2.2) / 21.0, 0.0, 1.0);
         vSeed = aSeed;
       }
     `;
