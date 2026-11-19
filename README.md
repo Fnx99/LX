@@ -26,7 +26,7 @@ Fabric wholesalers & retail shops · Soft toy / plush toy manufacturers · Garme
 index.html
 css/style.css
 js/main.js
-assets/images/   hero, fabric close-ups (play-boa, pv-plush, velboa, minky, faux-fur, polar-fleece), fabric-rolls
+assets/images/   bg-pv-plush (hero), fabric close-ups (play-boa, pv-plush, velboa, minky, faux-fur, polar-fleece), fabric-rolls
 sitemap.xml
 robots.txt
 ```
