@@ -312,9 +312,7 @@ section[id] { scroll-margin-top: calc(var(--nav-h) - 1px); }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 70% center;
-  transform: scale(1.06);
-  animation: heroZoom 2.4s var(--ease) forwards;
+  object-position: center center;
 }
 .hero__canvas {
   position: absolute;
@@ -323,7 +321,7 @@ section[id] { scroll-margin-top: calc(var(--nav-h) - 1px); }
   height: 100%;
   display: block;
   opacity: 0;
-  transition: opacity 0.9s var(--ease);
+  transition: opacity 0.6s var(--ease);
   pointer-events: none;
 }
 .hero__canvas.is-ready { opacity: 1; }
@@ -333,18 +331,13 @@ section[id] { scroll-margin-top: calc(var(--nav-h) - 1px); }
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(10, 11, 13, 0.82) 0%, rgba(10, 11, 13, 0.45) 45%, rgba(10, 11, 13, 0.05) 75%),
-    linear-gradient(0deg, rgba(10, 11, 13, 0.75) 0%, rgba(10, 11, 13, 0) 45%);
+    linear-gradient(90deg, rgba(10, 11, 13, 0.58) 0%, rgba(10, 11, 13, 0.30) 42%, rgba(10, 11, 13, 0) 68%),
+    linear-gradient(0deg, rgba(10, 11, 13, 0.45) 0%, rgba(10, 11, 13, 0) 32%);
 }
-@keyframes heroZoom { to { transform: scale(1); } }
 
 .hero__content {
   padding-top: calc(var(--nav-h) + 64px);
   padding-bottom: clamp(56px, 8vw, 104px);
-  perspective: 1100px;
-  transform-style: preserve-3d;
-  transform: translate3d(var(--hx, 0px), var(--hy, 0px), 0) rotateX(var(--hrx, 0deg)) rotateY(var(--hry, 0deg));
-  will-change: transform;
 }
 .hero__bar {
   display: flex;
@@ -590,7 +583,6 @@ section[id] { scroll-margin-top: calc(var(--nav-h) - 1px); }
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(20px, 2.4vw, 32px);
   row-gap: clamp(48px, 5vw, 72px);
-  perspective: 1200px;
 }
 
 .fabric {
@@ -600,20 +592,11 @@ section[id] { scroll-margin-top: calc(var(--nav-h) - 1px); }
   border-radius: calc(var(--radius) + 6px);
   background: var(--white);
   border: 1px solid rgba(14, 15, 18, 0.08);
-  transform-style: preserve-3d;
-  transform:
-    perspective(1200px)
-    translate3d(0, var(--fy, 0px), var(--tz, 0px))
-    rotateX(var(--rx, 0deg))
-    rotateY(var(--ry, 0deg));
-  box-shadow:
-    0 calc(20px + var(--tz, 0px) * 0.8) calc(44px + var(--tz, 0px) * 1.2) -18px rgba(14, 15, 18, 0.14),
-    0 2px 6px rgba(14, 15, 18, 0.04);
-  transition: border-color .35s var(--ease), box-shadow .35s var(--ease);
-  will-change: transform;
+  box-shadow: 0 12px 32px -18px rgba(14, 15, 18, 0.12), 0 2px 6px rgba(14, 15, 18, 0.04);
+  transition: border-color .35s var(--ease);
 }
-.fabric.is-hovered {
-  border-color: rgba(255, 74, 43, 0.35);
+.fabric:hover {
+  border-color: rgba(255, 74, 43, 0.3);
 }
 .fabric__media {
   position: relative;
@@ -621,33 +604,15 @@ section[id] { scroll-margin-top: calc(var(--nav-h) - 1px); }
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--paper-2);
-  transform: translateZ(14px);
-  transform-style: preserve-3d;
-}
-.fabric__media::after {
-  content: '';
-  position: absolute;
-  inset: -20%;
-  pointer-events: none;
-  background: radial-gradient(
-    circle at var(--gx, 50%) var(--gy, 30%),
-    rgba(255, 255, 255, 0.34) 0%,
-    rgba(255, 255, 255, 0.08) 28%,
-    rgba(255, 255, 255, 0) 62%
-  );
-  opacity: var(--go, 0.35);
-  mix-blend-mode: overlay;
-  transition: opacity .35s var(--ease);
 }
 .fabric__media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.06) translate3d(var(--ix, 0px), var(--iy, 0px), 0);
-  transition: transform 0.6s var(--ease);
+  transition: transform 0.8s var(--ease);
 }
 .fabric:hover .fabric__media img {
-  transform: scale(1.1) translate3d(var(--ix, 0px), var(--iy, 0px), 0);
+  transform: scale(1.045);
 }
 .fabric__index {
   position: absolute;
@@ -695,7 +660,6 @@ section[id] { scroll-margin-top: calc(var(--nav-h) - 1px); }
   display: flex;
   flex-direction: column;
   flex: 1;
-  transform: translateZ(20px);
 }
 .fabric__name {
   font-size: clamp(24px, 2vw, 30px);
@@ -1101,62 +1065,15 @@ section[id] { scroll-margin-top: calc(var(--nav-h) - 1px); }
 .wa-float:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 18px 36px -8px rgba(37, 211, 102, 0.7); }
 
 /* ==========================================================================
-   3D FLOATING STAGE
-   ========================================================================== */
-.customer-grid {
-  perspective: 1100px;
-}
-.customer {
-  transform-style: preserve-3d;
-  transform:
-    perspective(1100px)
-    translate3d(0, var(--fy, 0px), var(--tz, 0px))
-    rotateX(var(--rx, 0deg))
-    rotateY(var(--ry, 0deg));
-  will-change: transform;
-}
-
-.about__media {
-  transform-style: preserve-3d;
-  transform:
-    perspective(1100px)
-    translate3d(0, var(--fy, 0px), var(--tz, 0px))
-    rotateX(var(--rx, 0deg))
-    rotateY(var(--ry, 0deg));
-  box-shadow: 0 32px 64px -24px rgba(14, 15, 18, 0.25);
-  will-change: transform;
-}
-
-.enquiry {
-  transform-style: preserve-3d;
-  transform:
-    perspective(1200px)
-    translate3d(0, var(--fy, 0px), 0)
-    rotateX(var(--rx, 0deg))
-    rotateY(var(--ry, 0deg));
-  will-change: transform;
-}
-
-/* ==========================================================================
    REVEAL ANIMATION (only when JS is available)
    ========================================================================== */
 .js .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 1s var(--ease), transform 1s var(--ease);
+  transform: translateY(20px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
   transition-delay: var(--d, 0s);
 }
 .js .reveal.is-visible { opacity: 1; transform: none; }
-.js .fabric.reveal.is-visible,
-.js .customer.reveal.is-visible,
-.js .about__media.reveal.is-visible,
-.js .enquiry.reveal.is-visible {
-  transform:
-    perspective(1200px)
-    translate3d(0, var(--fy, 0px), var(--tz, 0px))
-    rotateX(var(--rx, 0deg))
-    rotateY(var(--ry, 0deg));
-}
 
 /* ==========================================================================
    RESPONSIVE

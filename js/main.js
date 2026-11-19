@@ -1,11 +1,11 @@
 /**
- * Loom X (Pvt) Ltd — Site & Top-Down 3D Macro Yarn & Stitch Engine (v6)
- * Inspired by Blender 3D Embroidery / Yarn macro animations:
- * - Overhead top-down macro view looking straight down onto the fabric
- * - Crisp 3D twisted yarn plies, interlocking knit/tuft stitches & macro pile detail
- * - Soft rolling 3D cloth folds & dappled studio light/shadow caustics
- * - Live 3D stitching / tufting transition with whip-stitch edge, loose pulling
- *   yarn threads, and directional cast drop-shadows onto the cloth below.
+ * Loom X (Pvt) Ltd — Site & Overhead Macro Fabric Wave Engine
+ * - Nav state on scroll + mobile menu
+ * - Enquiry list: "Add to enquiry" on fabric cards syncs with the form chips
+ * - Enquiry form composes a real WhatsApp / email message (no fake submit)
+ * - Reveal on scroll
+ * - Background-only WebGL 3D cloth ripple & lighting animation across all 6
+ *   overhead macro fabric photos (zero floating text or moving cards)
  */
 (() => {
   'use strict';
@@ -16,61 +16,53 @@
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-  /* ---------- 6 Top-Down Macro Fabric Worlds ---------- */
+  /* ---------- 6 Overhead 16:9 Macro Fabric Backgrounds ---------- */
   const FABRIC_WORLDS = [
     {
-      name: '01 — Play Boa · Curled Bouclé Yarn Pile',
-      img: 'assets/images/play-boa.jpg',
-      yarnType: 0.0, // Coiled bouclé yarn loops
-      rimCol: [1.00, 0.90, 0.72]
+      name: '01 — Play Boa · Curled Bouclé Pile',
+      img: 'assets/images/bg-play-boa.jpg',
+      rimCol: [1.00, 0.90, 0.74]
     },
     {
-      name: '02 — PV Plush · Dense Sheared Velvet Tuft',
-      img: 'assets/images/pv-plush.jpg',
-      yarnType: 1.0, // Dense velvet cut-pile & satin stitch sheen
-      rimCol: [1.00, 0.80, 0.88]
+      name: '02 — PV Plush · Dense Sheared Velvet',
+      img: 'assets/images/bg-pv-plush.jpg',
+      rimCol: [1.00, 0.80, 0.86]
     },
     {
-      name: '03 — Velboa · Interlocking Knit Plush Stitches',
-      img: 'assets/images/velboa.jpg',
-      yarnType: 2.0, // Crisp V-shaped warp-knit plush stitches
-      rimCol: [1.00, 0.86, 0.58]
+      name: '03 — Velboa · Short Sculpted Plush',
+      img: 'assets/images/bg-velboa.jpg',
+      rimCol: [1.00, 0.86, 0.62]
     },
     {
-      name: '04 — Minky / Super Soft · Embossed 3D Dimple Plush',
-      img: 'assets/images/minky.jpg',
-      yarnType: 3.0, // Raised 3D dimple domes & fine silky yarn
-      rimCol: [0.80, 1.00, 0.86]
+      name: '04 — Minky / Super Soft · Raised Dimple Plush',
+      img: 'assets/images/bg-minky.jpg',
+      rimCol: [0.84, 0.98, 0.88]
     },
     {
-      name: '05 — Faux Fur · Long-Pile Brushed Yarn Locks',
-      img: 'assets/images/faux-fur.jpg',
-      yarnType: 4.0, // Flowing multi-strand long-pile yarn
-      rimCol: [1.00, 0.92, 0.78]
+      name: '05 — Faux Fur · Long-Pile Fur Locks',
+      img: 'assets/images/bg-faux-fur.jpg',
+      rimCol: [1.00, 0.92, 0.80]
     },
     {
-      name: '06 — Polar Fleece · Woven Twill & Brushed Thermal Yarn',
-      img: 'assets/images/polar-fleece.jpg',
-      yarnType: 5.0, // Deep navy twill & brushed thermal yarn
-      rimCol: [0.68, 0.86, 1.00]
+      name: '06 — Polar Fleece · Brushed Thermal Nap',
+      img: 'assets/images/bg-polar-fleece.jpg',
+      rimCol: [0.72, 0.86, 1.00]
     }
   ];
 
-  /* ---------- Global 3D State ---------- */
+  /* ---------- Background Flow State ---------- */
   const flowState = {
-    mode: 'sea',
-    prevIdx: 5,       // Start with Navy Polar Fleece underneath while Play Boa stitches over it!
+    mode: 'sea', // 'sea' (Gentle Wave) | 'sky' (Breeze Drift)
+    prevIdx: 0,
     fabricIdx: 0,
-    morphProg: 0.35,  // Start mid-stitch so visitor immediately sees the 3D stitching wave
-    warpPulse: 0.6,
+    pendingIdx: null,
+    morphProg: 1.0,
     mouseX: 0.5,
     mouseY: 0.5,
     targetMouseX: 0.5,
     targetMouseY: 0.5,
-    mouseVelX: 0,
-    mouseVelY: 0,
-    scrollY: window.scrollY,
-    scrollVel: 0
+    mouseEnergy: 0,
+    scrollY: window.scrollY
   };
 
   /* ---------- Nav ---------- */
@@ -78,7 +70,10 @@
   const toggle = $('#nav-toggle');
   const links = $('#nav-links');
 
-  const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > 40);
+  const onScroll = () => {
+    flowState.scrollY = window.scrollY;
+    nav.classList.toggle('is-scrolled', flowState.scrollY > 40);
+  };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
@@ -93,7 +88,7 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
   window.matchMedia('(min-width: 961px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
 
-  /* ---------- Flow Mode Switcher & Full Macro View Toggle ---------- */
+  /* ---------- Background Motion Controls ---------- */
   const flowPill = $('.flow-pill');
   const flowBtns = $$('.flow-pill__btn[data-flow-mode]');
   flowBtns.forEach(btn => {
@@ -111,30 +106,19 @@
     pureForestBtn.addEventListener('click', () => {
       const active = heroSection.classList.toggle('is-pure-forest');
       pureForestBtn.setAttribute('aria-pressed', String(active));
-      pureForestBtn.textContent = active ? 'Show Headline' : 'Full Macro View';
+      pureForestBtn.textContent = active ? 'Show Headline' : 'Inspect Fabric';
     });
   }
 
-  /* ---------- 3D Fabric-to-Fabric Stitch Controller ---------- */
+  /* ---------- Overhead Fabric Selector ---------- */
   const forestPills = $$('.forest-pill');
   const currentLabel = $('#forest-current-label');
-  const warpNextBtn = $('#warp-next-btn');
   const heroImgEl = $('#hero-img');
 
-  function warpToFabric(idx, scrollToHero = false) {
+  let requestTexture = () => {};
+
+  function selectHeroFabric(idx, scrollToHero = false) {
     const cleanIdx = ((idx % FABRIC_WORLDS.length) + FABRIC_WORLDS.length) % FABRIC_WORLDS.length;
-    if (cleanIdx !== flowState.fabricIdx) {
-      flowState.prevIdx = flowState.fabricIdx;
-      flowState.fabricIdx = cleanIdx;
-      flowState.morphProg = 0.0;
-      flowState.warpPulse = 1.0;
-      if (heroImgEl) heroImgEl.src = FABRIC_WORLDS[cleanIdx].img;
-    } else {
-      // Re-run the 3D stitching animation for the selected fabric
-      flowState.prevIdx = (cleanIdx + 5) % FABRIC_WORLDS.length;
-      flowState.morphProg = 0.0;
-      flowState.warpPulse = 0.9;
-    }
 
     if (currentLabel) currentLabel.textContent = FABRIC_WORLDS[cleanIdx].name;
     forestPills.forEach((pill, i) => {
@@ -143,6 +127,9 @@
       pill.setAttribute('aria-selected', String(active));
     });
 
+    if (heroImgEl) heroImgEl.src = FABRIC_WORLDS[cleanIdx].img;
+    requestTexture(cleanIdx);
+
     if (scrollToHero && heroSection) {
       heroSection.scrollIntoView({ behavior: 'smooth' });
     }
@@ -150,19 +137,13 @@
 
   forestPills.forEach(pill => {
     pill.addEventListener('click', () => {
-      warpToFabric(Number(pill.dataset.fabricIdx || 0), false);
+      selectHeroFabric(Number(pill.dataset.fabricIdx || 0), false);
     });
   });
 
-  if (warpNextBtn) {
-    warpNextBtn.addEventListener('click', () => {
-      warpToFabric(flowState.fabricIdx + 1, false);
-    });
-  }
-
   $$('[data-enter-forest]').forEach(btn => {
     btn.addEventListener('click', () => {
-      warpToFabric(Number(btn.dataset.enterForest || 0), true);
+      selectHeroFabric(Number(btn.dataset.enterForest || 0), true);
     });
   });
 
@@ -306,32 +287,34 @@
   if (reduce) return;
 
   /* ==========================================================================
-     1. POINTER & SCROLL TRACKER
+     POINTER TRACKER FOR HERO BACKGROUND RIPPLE ONLY
      ========================================================================== */
-  window.addEventListener('pointermove', (e) => {
-    const nx = e.clientX / Math.max(1, window.innerWidth);
-    const ny = e.clientY / Math.max(1, window.innerHeight);
-    flowState.mouseVelX += (nx - flowState.targetMouseX) * 0.6;
-    flowState.mouseVelY += (ny - flowState.targetMouseY) * 0.6;
-    flowState.targetMouseX = nx;
-    flowState.targetMouseY = ny;
-  }, { passive: true });
+  if (heroSection) {
+    heroSection.addEventListener('pointermove', (e) => {
+      const rect = heroSection.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const nx = (e.clientX - rect.left) / rect.width;
+      const ny = (e.clientY - rect.top) / rect.height;
+      const dist = Math.hypot(nx - flowState.targetMouseX, ny - flowState.targetMouseY);
+      flowState.mouseEnergy = Math.min(1.0, flowState.mouseEnergy + dist * 2.2);
+      flowState.targetMouseX = nx;
+      flowState.targetMouseY = ny;
+    }, { passive: true });
+  }
 
   /* ==========================================================================
-     2. WEBGL TOP-DOWN 3D MACRO YARN, STITCH & RIPPLING CLOTH ENGINE (#hero-canvas)
-        - Pure overhead top-down view looking directly at the fabric from above
-        - Renders 3D twisted yarn plies, interlocking knit/embroidery stitches,
-          real macro fabric photography, rolling 3D cloth ripples, and dappled
-          studio light/shadow caustics
-        - Features a live Blender-style 3D stitching frontier with raised bevel,
-          whip-stitched border, loose pulling yarn threads, and cast drop-shadows!
+     WEBGL OVERHEAD MACRO CLOTH WAVE & LIGHTING BACKGROUND (#hero-canvas)
+     - Uses true cover-fit UV mapping so 16:9 overhead fabric photos never stretch
+     - Animates only the background cloth: smooth undulating cloth waves,
+       synchronized raking light/shadow highlights across the real macro yarn
+       texture, and seamless diagonal wave transitions when switching fabrics.
      ========================================================================== */
-  function initTopDownYarnWebGL() {
+  function initOverheadClothWebGL() {
     const canvas = $('#hero-canvas');
     if (!canvas) return null;
 
     const gl = canvas.getContext('webgl', {
-      alpha: true,
+      alpha: false,
       antialias: true,
       preserveDrawingBuffer: true,
       powerPreference: 'high-performance'
@@ -354,221 +337,96 @@
 
       uniform sampler2D uTexA;
       uniform sampler2D uTexB;
-      uniform float uMorph;     // 0..1 stitching progress across the fabric
+      uniform vec2 uRes;
+      uniform vec2 uImgResA;
+      uniform vec2 uImgResB;
+      uniform float uMorph;
       uniform float uTime;
-      uniform float uAspect;
       uniform vec2 uMouse;
-      uniform float uMode;      // 0 = soft ripple, 1 = breeze wave
-      uniform float uYarnA;
-      uniform float uYarnB;
+      uniform float uMouseEnergy;
+      uniform float uMode; // 0 = gentle wave, 1 = breeze drift
       uniform vec3 uRimCol;
 
-      float hash21(vec2 p) {
-        p = fract(p * vec2(234.34, 435.345));
-        p += dot(p, p + 34.23);
-        return fract(p.x * p.y);
+      // Exact CSS object-fit: cover UV calculation with slight overscan margin for wave displacement
+      vec2 coverUv(vec2 uv, vec2 res, vec2 imgRes) {
+        float rs = res.x / max(1.0, res.y);
+        float ri = imgRes.x / max(1.0, imgRes.y);
+        vec2 scale = rs > ri ? vec2(1.0, ri / rs) : vec2(rs / ri, 1.0);
+        vec2 centered = (uv - 0.5) * scale * 0.94 + 0.5;
+        return centered;
       }
 
-      float vnoise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(
-          mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
-          mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
-          u.y
-        );
+      // Single unified smooth 3D cloth wave field
+      float clothWave(vec2 uv, float t) {
+        float aspect = uRes.x / max(1.0, uRes.y);
+        vec2 p = vec2(uv.x * aspect, uv.y);
+
+        float speed = mix(0.65, 1.15, uMode);
+        float amp   = mix(1.0, 1.35, uMode);
+
+        // Soft rolling diagonal folds sweeping smoothly across the cloth
+        float w1 = sin(p.x * 2.6 + p.y * 1.9 - t * speed) * 0.50;
+        float w2 = cos(p.x * 1.7 - p.y * 2.8 + t * speed * 0.78) * 0.34;
+        float w3 = sin((p.x + p.y) * 4.2 - t * speed * 1.25) * 0.16;
+
+        // Subtle localized cursor ripple when hovering the background
+        vec2 mp = vec2(uMouse.x * aspect, uMouse.y);
+        float dist = length(p - mp);
+        float cursorRipple = sin(dist * 16.0 - t * 4.0) * exp(-dist * 4.5) * (0.28 * uMouseEnergy);
+
+        return (w1 + w2 + w3) * amp + cursorRipple;
       }
 
-      // Macro 3D cloth fold height from above (soft billowing waves + cursor touch press)
-      float clothFoldHeight(vec2 p, float t) {
-        float w1 = sin(p.x * 3.2 + p.y * 2.4 - t * 0.85) * 0.45;
-        float w2 = cos(p.x * 2.1 - p.y * 3.6 + t * 0.65) * 0.35;
-        float w3 = sin((p.x + p.y) * 5.2 - t * 1.1) * 0.15;
+      vec3 sampleFabric(sampler2D tex, vec2 uv, vec2 imgRes, vec2 disp, vec2 waveGrad, vec3 lightDir) {
+        vec2 baseUv = clamp(coverUv(uv, uRes, imgRes) + disp, 0.004, 0.996);
+        vec3 col = texture2D(tex, baseUv).rgb;
 
-        // Cursor finger-press ripple from above
-        vec2 m = vec2(uMouse.x * uAspect, uMouse.y);
-        float d2 = dot(p - m, p - m);
-        float press = -exp(-d2 * 14.0) * 0.35 + sin(sqrt(d2) * 24.0 - t * 4.0) * exp(-d2 * 8.0) * 0.08;
+        // Sample the real photograph's own fiber luminance gradient for authentic raking sheen
+        float texEps = 0.0022;
+        float lC = dot(col, vec3(0.333));
+        float lX = dot(texture2D(tex, clamp(baseUv + vec2(texEps, 0.0), 0.004, 0.996)).rgb, vec3(0.333)) - lC;
+        float lY = dot(texture2D(tex, clamp(baseUv + vec2(0.0, texEps), 0.004, 0.996)).rgb, vec3(0.333)) - lC;
 
-        return w1 + w2 + w3 + press;
-      }
-
-      // Procedural 3D twisted yarn & stitch micro-relief seen from directly above
-      // Recreates the crisp 3D cylindrical thread plies & woven/knitted stitch structure of Blender 5.0
-      float yarnMicroHeight(vec2 p, float yarnType) {
-        if (yarnType < 0.5) {
-          // 01 Play Boa: High-density curled bouclé yarn loops with 2-ply thread twist (no liquid blobs!)
-          vec2 q = p * 74.0;
-          float loopU = q.x + sin(q.y * 0.65) * 1.4;
-          float loopV = q.y + cos(q.x * 0.65) * 1.4;
-          float strand = 0.5 + 0.5 * cos(loopU * 3.14159);
-          float plyTwist = 0.5 + 0.5 * sin((loopU * 0.7 + loopV * 1.3) * 6.28318);
-          return sqrt(max(0.05, strand)) * (0.72 + 0.28 * plyTwist);
-        } else if (yarnType < 1.5) {
-          // 02 PV Plush: Parallel diagonal satin-stitch 3D yarn cylinders with 2-ply twist (like EUsyXIrk5KE!)
-          vec2 q = p * 88.0;
-          float across = q.x * 0.45 + q.y * 0.89;
-          float along  = q.x * 0.89 - q.y * 0.45;
-          // Rounded cylindrical yarn profile across each thread
-          float f = fract(across) - 0.5;
-          float cyl = sqrt(max(0.02, 1.0 - 4.0 * f * f));
-          // Diagonal 2-ply twist ridges along each yarn cylinder + stitch turn indentations
-          float ply = 0.5 + 0.5 * sin(along * 8.5 + across * 12.566);
-          float stitchTurn = smoothstep(0.0, 0.14, abs(fract(along * 0.08) - 0.5));
-          return cyl * (0.74 + 0.26 * ply) * (0.75 + 0.25 * stitchTurn);
-        } else if (yarnType < 2.5) {
-          // 03 Velboa: Crisp interlocking V-shaped warp-knit stitches from above
-          vec2 q = p * vec2(72.0, 84.0);
-          float vLeg = abs(fract(q.x) - 0.5) * 1.35;
-          float f = fract(q.x * 2.0) - 0.5;
-          float cyl = sqrt(max(0.02, 1.0 - 4.0 * f * f));
-          float loopRow = 0.5 + 0.5 * cos((q.y + vLeg) * 6.28318);
-          return cyl * (0.68 + 0.32 * loopRow);
-        } else if (yarnType < 3.5) {
-          // 04 Minky: Top-down 3D raised circular Minky dimple domes + fine woven micro-yarn
-          vec2 mp = p * 9.0;
-          mp.x += mod(floor(mp.y), 2.0) * 0.5;
-          vec2 gv = fract(mp) - 0.5;
-          float r = length(gv);
-          float dome = smoothstep(0.38, 0.08, r) * sqrt(max(0.0, 1.0 - min(1.0, (r / 0.38) * (r / 0.38))));
-          vec2 kq = p * 92.0;
-          float fineYarn = (0.5 + 0.5 * cos(kq.x * 6.283)) * (0.5 + 0.5 * cos(kq.y * 6.283));
-          return dome * 0.72 + fineYarn * 0.28;
-        } else if (yarnType < 4.5) {
-          // 05 Faux Fur: Fine, high-density brushed multi-filament yarn strands
-          float wave = sin(p.x * 5.0 + p.y * 3.5) * 0.12;
-          vec2 fq = vec2((p.x + wave) * 105.0, p.y * 24.0);
-          float f = fract(fq.x) - 0.5;
-          float cyl = sqrt(max(0.02, 1.0 - 4.0 * f * f));
-          float lenVar = 0.5 + 0.5 * sin(fq.y * 3.14159 + floor(fq.x) * 1.7);
-          return cyl * (0.70 + 0.30 * lenVar);
-        } else {
-          // 06 Polar Fleece: Crisp woven twill warp/weft yarn grid (identical to the blue cloth in EUsyXIrk5KE!)
-          vec2 tq = p * 94.0;
-          float twill = 0.5 + 0.5 * cos((tq.x + tq.y * 0.5) * 6.28318);
-          float weft  = 0.5 + 0.5 * cos((tq.y - tq.x * 0.5) * 6.28318);
-          return (twill * 0.64 + weft * 0.36);
-        }
-      }
-
-      // Compute 3D shaded fabric + yarn layer from above (matte fibrous textile shading, zero wet plastic sheen)
-      vec3 shadeTopDownFabric(sampler2D tex, vec2 uv, vec2 metricP, float yarnType, vec3 clothNorm, float foldH, float dappled) {
-        // Gentle overhead cloth drape offset
-        vec2 drapedUv = clamp(uv + clothNorm.xy * 0.008, 0.02, 0.98);
-        vec3 baseCol = texture2D(tex, drapedUv).rgb;
-
-        // Crisp 3D cylindrical yarn normal + subtle macro photo fiber normal
-        float eps = 0.0014;
-        float hC = yarnMicroHeight(metricP, yarnType);
-        float hX = yarnMicroHeight(metricP + vec2(eps, 0.0), yarnType) - hC;
-        float hY = yarnMicroHeight(metricP + vec2(0.0, eps), yarnType) - hC;
-
-        float tC = dot(baseCol, vec3(0.333));
-        float tX = dot(texture2D(tex, clamp(drapedUv + vec2(0.003, 0.0), 0.02, 0.98)).rgb, vec3(0.333)) - tC;
-        float tY = dot(texture2D(tex, clamp(drapedUv + vec2(0.0, 0.003), 0.02, 0.98)).rgb, vec3(0.333)) - tC;
-
-        vec3 microNorm = normalize(vec3(
-          clothNorm.x - hX * 0.85 - tX * 1.1,
-          clothNorm.y - hY * 0.85 - tY * 1.1,
+        // Combine macro cloth fold normal with micro photo fiber normal
+        vec3 n = normalize(vec3(
+          -waveGrad.x * 0.22 - lX * 1.35,
+          -waveGrad.y * 0.22 - lY * 1.35,
           1.0
         ));
 
-        // Top-left studio key light + soft Oren-Nayar matte yarn diffusion
-        vec3 lightDir = normalize(vec3(-0.52, -0.55, 0.65));
-        float diff = max(0.0, dot(microNorm, lightDir));
-        float wrapDiff = max(0.0, (dot(microNorm, lightDir) + 0.35) / 1.35);
-        float threadAO = mix(0.68, 1.12, hC);
+        float diff = max(0.0, dot(n, lightDir));
+        float wrapDiff = 0.80 + 0.34 * diff;
+        float rimSheen = pow(clamp(1.0 - n.z, 0.0, 1.0), 1.8);
 
-        // Dappled sunlight & cloth fold shadow (like the diagonal studio light in EUsyXIrk5KE)
-        float lightMod = (0.56 + 0.54 * wrapDiff) * (0.76 + 0.34 * dappled) * threadAO;
-        vec3 shaded = baseCol * lightMod;
-        // Soft, wide fibrous thread sheen (matte silk/cotton, not glossy metal)
-        shaded += (baseCol * 0.6 + uRimCol * 0.4) * pow(diff, 4.0) * 0.14 * hC;
-        return shaded;
+        vec3 lit = col * wrapDiff;
+        lit += uRimCol * rimSheen * (0.10 + 0.12 * lC);
+        return lit;
       }
 
       void main() {
-        float speed = mix(0.55, 0.95, uMode);
-        float t = uTime * speed;
+        // Compute wave value and exact gradient in the same coordinate space
+        float eps = 0.006;
+        float wC = clothWave(vUv, uTime);
+        float wX = (clothWave(vUv + vec2(eps, 0.0), uTime) - wC) / eps;
+        float wY = (clothWave(vUv + vec2(0.0, eps), uTime) - wC) / eps;
+        vec2 waveGrad = vec2(wX, wY);
 
-        // Aspect-corrected top-down coordinates
-        vec2 p = vec2(vUv.x * uAspect, vUv.y);
+        // Gently displace the real fabric photo along the wave slope so the cloth ripples
+        vec2 disp = -waveGrad * 0.0032;
 
-        // 1. Macro 3D cloth fold normal & dappled light from above
-        float cEps = 0.018;
-        float fC = clothFoldHeight(p, t);
-        float fX = clothFoldHeight(p + vec2(cEps, 0.0), t) - fC;
-        float fY = clothFoldHeight(p + vec2(0.0, cEps), t) - fC;
-        vec3 clothNorm = normalize(vec3(-fX / cEps * 0.16, -fY / cEps * 0.16, 1.0));
+        // Slowly breathing raking light from upper-right across the cloth folds
+        vec3 lightDir = normalize(vec3(0.45 + 0.12 * sin(uTime * 0.4), -0.45 + 0.10 * cos(uTime * 0.35), 0.76));
 
-        // Soft diagonal dappled light beams across the top-down cloth
-        float dappled = 0.5 + 0.5 * sin(p.x * 3.8 + p.y * 2.8 - t * 0.45 + fC * 1.1);
+        vec3 colB = sampleFabric(uTexB, vUv, uImgResB, disp, waveGrad, lightDir);
 
-        // Close-up overhead UV
-        vec2 zoomUv = (vUv - 0.5) * 0.86 + 0.5 + vec2(sin(t * 0.22) * 0.015, cos(t * 0.18) * 0.015);
-
-        // 2. Shade Fabric A (base cloth underneath) and Fabric B (stitched 3D yarn layer on top)
-        vec3 colA = shadeTopDownFabric(uTexA, zoomUv, p, uYarnA, clothNorm, fC, dappled);
-        vec3 colB = shadeTopDownFabric(uTexB, zoomUv, p, uYarnB, clothNorm, fC, dappled);
-
-        // 3. Blender-style 3D Embroidery / Tufting Stitch Wave across the cloth
-        if (uMorph < 0.995) {
-          float stitchCoord = (vUv.x * 0.80 + vUv.y * 0.20);
-          float frontier = uMorph * 1.28 - 0.10;
-
-          // Stepped embroidery row contour + fine rounded stitch piping
-          float rowId = floor(p.y * 18.0);
-          float rowStep = (hash21(vec2(rowId, 3.7)) - 0.5) * 0.032;
-          float fineStitch = p.y * 90.0 + p.x * 18.0;
-          float bead = (0.5 + 0.5 * cos(fineStitch * 6.28318)) * 0.0025;
-          float signedDist = (frontier + rowStep + bead) - stitchCoord;
-
-          // Raised embroidered patch mask
-          float patchMask = smoothstep(-0.002, 0.003, signedDist);
-
-          // 3D Whip-Stitched Border with dark needle-puncture holes along the edge (like EUsyXIrk5KE!)
-          float borderBand = smoothstep(0.016, 0.002, abs(signedDist - 0.006));
-          float whipCord = 0.5 + 0.5 * cos(fineStitch * 6.28318);
-          float needleHole = smoothstep(0.004, 0.001, abs(signedDist - 0.013)) * step(0.45, whipCord);
-
-          // Delicate cylindrical loose yarn threads pulling into the active stitch edge
-          float aheadDist = -signedDist;
-          float threadSlot = p.y * 65.0;
-          float slotId = floor(threadSlot);
-          float slotSeed = hash21(vec2(slotId, 9.1));
-          float threadLen = 0.014 + 0.032 * slotSeed;
-          float curveY = sin(aheadDist * 140.0 + slotSeed * 6.28) * 0.18;
-          float threadCyl = smoothstep(0.28, 0.06, abs(fract(threadSlot + curveY) - 0.5));
-          float looseThreads = step(0.52, slotSeed)
-            * smoothstep(0.0, 0.002, aheadDist)
-            * smoothstep(threadLen, threadLen * 0.15, aheadDist)
-            * threadCyl;
-
-          // Crisp 3D Drop Shadow cast onto Fabric A below by the raised patch & loose yarn threads
-          float shadowDist = (frontier + rowStep) - (stitchCoord - 0.014);
-          float patchShadow = smoothstep(-0.014, 0.008, shadowDist) * (1.0 - patchMask);
-          float threadShadow = step(0.52, slotSeed)
-            * smoothstep(0.0, 0.003, aheadDist - 0.006)
-            * smoothstep(threadLen + 0.006, threadLen * 0.15, aheadDist - 0.006)
-            * smoothstep(0.34, 0.05, abs(fract((threadSlot - 0.38) + curveY) - 0.5))
-            * (1.0 - patchMask);
-
-          colA *= (1.0 - 0.55 * max(patchShadow, threadShadow * 0.9));
-
-          // 3D beveled whip-stitch border & needle holes on Fabric B
-          vec3 whipCol = mix(colB * 1.12, uRimCol, 0.25);
-          colB = mix(colB, whipCol * (0.72 + 0.42 * whipCord), borderBand * 0.88);
-          colB *= (1.0 - 0.62 * needleHole);
-
-          vec3 finalCol = mix(colA, colB, patchMask);
-          finalCol = mix(finalCol, whipCol * 1.05, looseThreads);
-          colB = finalCol;
+        vec3 outCol = colB;
+        if (uMorph < 0.999) {
+          vec3 colA = sampleFabric(uTexA, vUv, uImgResA, disp, waveGrad, lightDir);
+          // Smooth diagonal cloth-wave crossfade aligned with the fold direction
+          float diag = vUv.x * 0.72 + vUv.y * 0.28 + wC * 0.04;
+          float sweep = smoothstep(diag - 0.18, diag + 0.18, uMorph * 1.36 - 0.18);
+          outCol = mix(colA, colB, sweep);
         }
-
-        // Soft studio contrast envelope on the left so white hero headline stays crisp
-        float leftReadability = smoothstep(0.0, 0.62, vUv.x);
-        vec3 outCol = colB * mix(0.56, 0.98, leftReadability);
 
         gl_FragColor = vec4(outCol, 1.0);
       }
@@ -600,12 +458,15 @@
     gl.enableVertexAttribArray(aPos);
     gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-    let texturesReady = 0;
     let fileProtocolBlocked = false;
-    const textures = FABRIC_WORLDS.map((fw) => {
+    const loadedFlags = new Array(FABRIC_WORLDS.length).fill(false);
+    const imgResList = FABRIC_WORLDS.map(() => [1376, 768]);
+    const textures = new Array(FABRIC_WORLDS.length).fill(null);
+
+    function loadFabricTexture(idx) {
+      if (fileProtocolBlocked || textures[idx]) return;
       const tex = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([160, 145, 130, 255]));
+      textures[idx] = tex;
 
       const img = new Image();
       img.onload = () => {
@@ -616,27 +477,63 @@
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-          texturesReady++;
+
+          imgResList[idx] = [img.naturalWidth || 1376, img.naturalHeight || 768];
+          loadedFlags[idx] = true;
+
+          // Mark canvas ready only once the first real texture is uploaded cleanly
+          if (idx === flowState.fabricIdx) {
+            canvas.classList.add('is-ready');
+          }
+
+          // If user requested a fabric while its texture was downloading, start the smooth transition now
+          if (flowState.pendingIdx === idx) {
+            flowState.pendingIdx = null;
+            flowState.prevIdx = flowState.fabricIdx;
+            flowState.fabricIdx = idx;
+            flowState.morphProg = 0.0;
+          }
         } catch (_) {
           fileProtocolBlocked = true;
           canvas.classList.remove('is-ready');
         }
       };
-      img.src = fw.img;
-      return tex;
-    });
+      img.src = FABRIC_WORLDS[idx].img;
+    }
+
+    // Load initial fabric immediately, then preload the remaining 5 smoothly in background
+    loadFabricTexture(0);
+    setTimeout(() => {
+      for (let i = 1; i < FABRIC_WORLDS.length; i++) loadFabricTexture(i);
+    }, 350);
+
+    requestTexture = (idx) => {
+      if (fileProtocolBlocked) return;
+      loadFabricTexture(idx);
+      if (loadedFlags[idx]) {
+        if (idx !== flowState.fabricIdx) {
+          flowState.prevIdx = flowState.fabricIdx;
+          flowState.fabricIdx = idx;
+          flowState.morphProg = 0.0;
+        }
+        flowState.pendingIdx = null;
+      } else {
+        flowState.pendingIdx = idx;
+      }
+    };
 
     const uLoc = {
-      texA:   gl.getUniformLocation(prog, 'uTexA'),
-      texB:   gl.getUniformLocation(prog, 'uTexB'),
-      morph:  gl.getUniformLocation(prog, 'uMorph'),
-      time:   gl.getUniformLocation(prog, 'uTime'),
-      aspect: gl.getUniformLocation(prog, 'uAspect'),
-      mouse:  gl.getUniformLocation(prog, 'uMouse'),
-      mode:   gl.getUniformLocation(prog, 'uMode'),
-      yarnA:  gl.getUniformLocation(prog, 'uYarnA'),
-      yarnB:  gl.getUniformLocation(prog, 'uYarnB'),
-      rimCol: gl.getUniformLocation(prog, 'uRimCol')
+      texA:        gl.getUniformLocation(prog, 'uTexA'),
+      texB:        gl.getUniformLocation(prog, 'uTexB'),
+      res:         gl.getUniformLocation(prog, 'uRes'),
+      imgResA:     gl.getUniformLocation(prog, 'uImgResA'),
+      imgResB:     gl.getUniformLocation(prog, 'uImgResB'),
+      morph:       gl.getUniformLocation(prog, 'uMorph'),
+      time:        gl.getUniformLocation(prog, 'uTime'),
+      mouse:       gl.getUniformLocation(prog, 'uMouse'),
+      mouseEnergy: gl.getUniformLocation(prog, 'uMouseEnergy'),
+      mode:        gl.getUniformLocation(prog, 'uMode'),
+      rimCol:      gl.getUniformLocation(prog, 'uRimCol')
     };
 
     function resize() {
@@ -656,17 +553,15 @@
     let modeVal = 0;
     const lerp = (a, b, k) => a + (b - a) * k;
 
-    return function renderTopDown(timeSec, dt) {
-      if (fileProtocolBlocked || texturesReady === 0) return;
+    return function renderBackground(timeSec, dt) {
+      if (fileProtocolBlocked || !loadedFlags[flowState.fabricIdx]) return;
       if (flowState.scrollY > window.innerHeight * 1.35) return;
 
-      const worldA = FABRIC_WORLDS[flowState.prevIdx] || FABRIC_WORLDS[0];
-      const worldB = FABRIC_WORLDS[flowState.fabricIdx] || FABRIC_WORLDS[0];
+      const idxB = flowState.fabricIdx;
+      const idxA = loadedFlags[flowState.prevIdx] ? flowState.prevIdx : idxB;
+      const worldB = FABRIC_WORLDS[idxB];
 
-      // Smooth 2.4-second stitching wave across the top-down fabric
-      flowState.morphProg = Math.min(1.0, flowState.morphProg + dt * 0.42);
-      flowState.warpPulse *= 0.93;
-
+      flowState.morphProg = Math.min(1.0, flowState.morphProg + dt * 0.95);
       curRim[0] = lerp(curRim[0], worldB.rimCol[0], 0.08);
       curRim[1] = lerp(curRim[1], worldB.rimCol[1], 0.08);
       curRim[2] = lerp(curRim[2], worldB.rimCol[2], 0.08);
@@ -677,20 +572,21 @@
       gl.useProgram(prog);
 
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, textures[flowState.prevIdx] || textures[0]);
+      gl.bindTexture(gl.TEXTURE_2D, textures[idxA]);
       gl.uniform1i(uLoc.texA, 0);
 
       gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, textures[flowState.fabricIdx] || textures[0]);
+      gl.bindTexture(gl.TEXTURE_2D, textures[idxB]);
       gl.uniform1i(uLoc.texB, 1);
 
+      gl.uniform2f(uLoc.res, canvas.width, canvas.height);
+      gl.uniform2fv(uLoc.imgResA, imgResList[idxA]);
+      gl.uniform2fv(uLoc.imgResB, imgResList[idxB]);
       gl.uniform1f(uLoc.morph, flowState.morphProg);
       gl.uniform1f(uLoc.time, timeSec);
-      gl.uniform1f(uLoc.aspect, Math.max(0.5, canvas.width / Math.max(1, canvas.height)));
       gl.uniform2f(uLoc.mouse, flowState.mouseX, flowState.mouseY);
+      gl.uniform1f(uLoc.mouseEnergy, flowState.mouseEnergy);
       gl.uniform1f(uLoc.mode, modeVal);
-      gl.uniform1f(uLoc.yarnA, worldA.yarnType);
-      gl.uniform1f(uLoc.yarnB, worldB.yarnType);
       gl.uniform3fv(uLoc.rimCol, curRim);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -698,121 +594,9 @@
   }
 
   /* ==========================================================================
-     3. 3D BUOYANCY, SCROLL-FLIGHT INERTIA & MAGNETIC 3D CARD TILT
+     UNIFIED 60FPS BACKGROUND LOOP
      ========================================================================== */
-  function initSpatial3DCards() {
-    const heroContent = $('.hero__content');
-    const floatItems = [
-      ...$$('.fabric').map((el, i) => ({ el, kind: 'fabric', phase: i * 0.95, ampY: 9, ampR: 1.8 })),
-      ...$$('.customer').map((el, i) => ({ el, kind: 'customer', phase: i * 1.2 + 0.5, ampY: 7, ampR: 1.4 })),
-      ...$$('.about__media').map((el) => ({ el, kind: 'media', phase: 0.7, ampY: 10, ampR: 2.0 })),
-      ...$$('.enquiry').map((el) => ({ el, kind: 'enquiry', phase: 1.4, ampY: 7, ampR: 1.1 }))
-    ].map(item => ({
-      ...item,
-      hovered: false,
-      targetRx: 0,
-      targetRy: 0,
-      targetTz: 0,
-      curRx: 0,
-      curRy: 0,
-      curTz: 0,
-      gx: 50,
-      gy: 30
-    }));
-
-    floatItems.forEach(item => {
-      const { el } = item;
-      el.addEventListener('pointerenter', () => {
-        item.hovered = true;
-        el.classList.add('is-hovered');
-        if (item.kind === 'fabric' && el.dataset.fabricIndex !== undefined) {
-          warpToFabric(Number(el.dataset.fabricIndex), false);
-        }
-      });
-
-      el.addEventListener('pointermove', (e) => {
-        const rect = el.getBoundingClientRect();
-        if (!rect.width || !rect.height) return;
-        const px = (e.clientX - rect.left) / rect.width;
-        const py = (e.clientY - rect.top) / rect.height;
-        const maxTilt = item.kind === 'fabric' ? 11 : 6;
-
-        item.targetRy = (px - 0.5) * (maxTilt * 2);
-        item.targetRx = (0.5 - py) * (maxTilt * 2);
-        item.targetTz = item.kind === 'fabric' ? 22 : 12;
-        item.gx = px * 100;
-        item.gy = py * 100;
-
-        el.style.setProperty('--gx', `${item.gx.toFixed(1)}%`);
-        el.style.setProperty('--gy', `${item.gy.toFixed(1)}%`);
-        el.style.setProperty('--go', '0.75');
-        el.style.setProperty('--ix', `${((0.5 - px) * 14).toFixed(1)}px`);
-        el.style.setProperty('--iy', `${((0.5 - py) * 14).toFixed(1)}px`);
-      });
-
-      el.addEventListener('pointerleave', () => {
-        item.hovered = false;
-        item.targetRx = 0;
-        item.targetRy = 0;
-        item.targetTz = 0;
-        el.classList.remove('is-hovered');
-        el.style.setProperty('--go', '0.35');
-        el.style.setProperty('--ix', '0px');
-        el.style.setProperty('--iy', '0px');
-      });
-    });
-
-    return function updateSpatial3D(t) {
-      const isSky = flowState.mode === 'sky';
-      const freq = isSky ? 1.35 : 0.95;
-
-      if (heroContent && flowState.scrollY < window.innerHeight) {
-        const hx = (flowState.mouseX - 0.5) * -12;
-        const hy = (flowState.mouseY - 0.5) * -10 + Math.sin(t * freq) * 4;
-        const hrx = (0.5 - flowState.mouseY) * 3.0 + Math.cos(t * 0.8) * 0.7;
-        const hry = (flowState.mouseX - 0.5) * 4.0 + Math.sin(t * 0.7) * 0.9;
-        heroContent.style.setProperty('--hx', `${hx.toFixed(2)}px`);
-        heroContent.style.setProperty('--hy', `${hy.toFixed(2)}px`);
-        heroContent.style.setProperty('--hrx', `${hrx.toFixed(2)}deg`);
-        heroContent.style.setProperty('--hry', `${hry.toFixed(2)}deg`);
-
-        if (heroImgEl) {
-          const ix = (flowState.mouseX - 0.5) * 22 + Math.sin(t * freq * 0.8) * 8;
-          const iy = (flowState.mouseY - 0.5) * 16 + Math.cos(t * freq * 0.7) * 6;
-          heroImgEl.style.transform = `scale(1.12) translate3d(${ix.toFixed(1)}px, ${iy.toFixed(1)}px, 0)`;
-        }
-      }
-
-      const scrollPitch = Math.max(-7, Math.min(7, flowState.scrollVel * 0.18));
-      const scrollLift = Math.max(-18, Math.min(18, -flowState.scrollVel * 0.35));
-
-      for (let i = 0; i < floatItems.length; i++) {
-        const it = floatItems[i];
-        const waveY = Math.sin(t * freq + it.phase) * it.ampY + scrollLift;
-        const waveRx = Math.cos(t * (freq * 0.85) + it.phase) * it.ampR;
-        const waveRy = Math.sin(t * (freq * 0.75) + it.phase * 1.3) * it.ampR;
-
-        const goalRx = it.hovered ? it.targetRx : (waveRx + scrollPitch);
-        const goalRy = it.hovered ? it.targetRy : waveRy;
-        const goalTz = it.hovered ? it.targetTz : (Math.sin(t * freq + it.phase) * 6);
-
-        it.curRx += (goalRx - it.curRx) * 0.1;
-        it.curRy += (goalRy - it.curRy) * 0.1;
-        it.curTz += (goalTz - it.curTz) * 0.1;
-
-        it.el.style.setProperty('--fy', `${(it.hovered ? -6 : waveY).toFixed(2)}px`);
-        it.el.style.setProperty('--rx', `${it.curRx.toFixed(2)}deg`);
-        it.el.style.setProperty('--ry', `${it.curRy.toFixed(2)}deg`);
-        it.el.style.setProperty('--tz', `${it.curTz.toFixed(2)}px`);
-      }
-    };
-  }
-
-  /* ==========================================================================
-     4. UNIFIED 60FPS ANIMATION LOOP
-     ========================================================================== */
-  const renderTopDown = initTopDownYarnWebGL();
-  const updateSpatial3D = initSpatial3DCards();
+  const renderBackground = initOverheadClothWebGL();
 
   let lastTime = performance.now() * 0.001;
   function tick(nowMs) {
@@ -822,17 +606,9 @@
 
     flowState.mouseX += (flowState.targetMouseX - flowState.mouseX) * 0.08;
     flowState.mouseY += (flowState.targetMouseY - flowState.mouseY) * 0.08;
-    flowState.mouseVelX *= 0.9;
-    flowState.mouseVelY *= 0.9;
+    flowState.mouseEnergy *= 0.94;
 
-    const currentScroll = window.scrollY;
-    const rawDelta = currentScroll - flowState.scrollY;
-    flowState.scrollY = currentScroll;
-    flowState.scrollVel += (rawDelta - flowState.scrollVel) * 0.15;
-    flowState.scrollVel *= 0.92;
-
-    if (renderTopDown) renderTopDown(t, dt);
-    if (updateSpatial3D) updateSpatial3D(t);
+    if (renderBackground) renderBackground(t, dt);
 
     requestAnimationFrame(tick);
   }
