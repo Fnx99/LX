@@ -1,19 +1,19 @@
 /* Loom X (Pvt) Ltd — PV Plush Pile Fabric
- * Minimalist 3-color widget & coverflow controller
+ * Apple Glass minimalist widget & dyed macro PV Plush controller
  */
 
 const WHATSAPP_NUMBER = '94773374429';
 const EMAIL = 'loomxlk@gmail.com';
 
 const PRESETS = [
-  { name: 'Crimson Red',   hex: '#EB3B3B', rgb: '235, 59, 59' },
-  { name: 'Honey Gold',    hex: '#E5A035', rgb: '229, 160, 53' },
-  { name: 'Emerald Green', hex: '#2EB878', rgb: '46, 184, 120' },
-  { name: 'Cobalt Blue',   hex: '#548AF7', rgb: '84, 138, 247' },
-  { name: 'Terracotta',    hex: '#E67045', rgb: '230, 112, 69' },
-  { name: 'Rosewood Pink', hex: '#DE5499', rgb: '222, 84, 153' },
-  { name: 'Teal Mint',     hex: '#4EC2B0', rgb: '78, 194, 176' },
-  { name: 'Soft Lavender', hex: '#9775FA', rgb: '151, 117, 250' }
+  { name: 'Dusty Rose',  hex: '#C98A8C', rgb: '201, 138, 140', pos: '50% 42%' },
+  { name: 'Warm Oat',    hex: '#CBB69E', rgb: '203, 182, 158', pos: '35% 58%' },
+  { name: 'Sage Leaf',   hex: '#93AD96', rgb: '147, 173, 150', pos: '62% 35%' },
+  { name: 'Slate Mist',  hex: '#8CA6C2', rgb: '140, 166, 194', pos: '42% 65%' },
+  { name: 'Clay Ochre',  hex: '#C99776', rgb: '201, 151, 118', pos: '58% 52%' },
+  { name: 'Soft Mauve',  hex: '#AF90A6', rgb: '175, 144, 166', pos: '48% 30%' },
+  { name: 'Sea Glass',   hex: '#88AEA9', rgb: '136, 174, 169', pos: '32% 46%' },
+  { name: 'Mocha Linen', hex: '#B69682', rgb: '182, 150, 130', pos: '66% 62%' }
 ];
 
 (() => {
@@ -27,6 +27,7 @@ const PRESETS = [
   const heroColorName = $('#heroColorName');
   const stageNum = $('#stageNum');
   const stageName = $('#stageName');
+  const stagePhoto = $('#swatchStage .fabric-photo');
   const ctaWa = $('#ctaWa');
   const colorList = $('#colorList');
   const contactColorHeading = $('#contactColorHeading');
@@ -37,6 +38,7 @@ const PRESETS = [
   const formNote = $('#formNote');
 
   const tv = $('#tv');
+  const tvPhoto = $('#tvCanvas .fabric-photo');
   const tvSwatchCode = $('#tvSwatchCode');
   const tvNum = $('#tvNum');
   const tvTitle = $('#tvTitle');
@@ -57,27 +59,29 @@ const PRESETS = [
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
   };
 
-  /* ── Build 3D Carousel Swatch Cards (image-free pure CSS pile texture) ── */
+  /* ── Build 3D Carousel Cards with Real Macro PV Plush Fabric + Apple Glass ── */
   const cards = PRESETS.map((p, i) => {
     const el = document.createElement('button');
     el.type = 'button';
     el.className = 'card';
-    el.style.setProperty('--card-color', p.hex);
+    el.style.setProperty('--swatch-color', p.hex);
+    el.style.setProperty('--fabric-pos', p.pos);
     el.setAttribute('aria-label', `${pad(i + 1)}. ${p.name} PV Plush — click to select or inspect`);
     el.innerHTML = `
-      <div class="pile-texture" aria-hidden="true"></div>
-      <div class="stitch-frame" aria-hidden="true"></div>
+      <div class="fabric-photo" aria-hidden="true"></div>
+      <div class="card-glass-veil" aria-hidden="true"></div>
       <div class="shade" aria-hidden="true"></div>
-      <span class="n">${pad(i + 1)} · PV PLUSH</span>
-      <span class="pile-mark" aria-hidden="true">SAME SOFT PILE</span>
-      <span class="t">${p.name}</span>
-      <span class="go">Inspect swatch</span>
+      <span class="glass-chip n">${pad(i + 1)} · PV PLUSH</span>
+      <div class="card-dock">
+        <span class="t">${p.name}</span>
+        <span class="go">Inspect swatch</span>
+      </div>
     `;
     cf.appendChild(el);
     return el;
   });
 
-  /* ── Build Interactive Color Preset List & Form Select ── */
+  /* ── Build Preset List & Select Dropdown ── */
   colorList.innerHTML = PRESETS.map((p, i) => `
     <li>
       <button type="button" data-i="${i}">
@@ -94,7 +98,7 @@ const PRESETS = [
     `<option value="${p.name}">${pad(i + 1)} · ${p.name} PV Plush</option>`
   ).join('');
 
-  /* ── Strict 3-Color Dynamic Accent Updater (2 fixed + 1 active fabric preset) ── */
+  /* ── Strict 3-Color Dynamic Accent Updater (2 fixed + 1 active dyed shade) ── */
   function applyPreset(i) {
     const p = PRESETS[i];
     if (!p) return;
@@ -107,6 +111,7 @@ const PRESETS = [
     if (heroColorName) heroColorName.textContent = p.name;
     if (stageNum) stageNum.textContent = `COLOR ${pad(i + 1)} / ${pad(N)}`;
     if (stageName) stageName.textContent = p.name;
+    if (stagePhoto) stagePhoto.style.setProperty('--fabric-pos', p.pos);
     if (contactColorHeading) contactColorHeading.textContent = p.name;
 
     if (ctaWa) {
@@ -128,14 +133,15 @@ const PRESETS = [
       if (rd) rd.textContent = active ? 'Selected ✓' : 'Pick color →';
     });
 
+    if (tvPhoto) tvPhoto.style.setProperty('--fabric-pos', p.pos);
     if (tvSwatchCode) tvSwatchCode.textContent = `COLOR ${pad(i + 1)}`;
     if (tvNum) tvNum.textContent = `Color ${pad(i + 1)} of ${pad(N)}`;
     if (tvTitle) tvTitle.textContent = p.name;
     if (tvWa) tvWa.href = waHref(p.name);
   }
 
-  /* ── 3D Curved Coverflow Math (lolawilde.com rhythm) ── */
-  const cardW = () => cards[0].offsetWidth || 290;
+  /* ── 3D Curved Coverflow Math ── */
+  const cardW = () => cards[0].offsetWidth || 300;
 
   function layout() {
     const w = cardW();
