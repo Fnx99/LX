@@ -1,50 +1,22 @@
-# Loom X (Pvt) Ltd — Website
+# Loom X (Pvt) Ltd — PV Plush Pile Fabric Website
 
-Single-page website for **Loom X (Pvt) Ltd**, a plush & pile fabric supplier based in Kadawatha, Sri Lanka.
+Minimalist, image-free static website for **Loom X (Pvt) Ltd** featuring **PV Plush** pile fabric exclusively.
 
-Pure HTML, CSS and JavaScript — no build step, ready for GitHub Pages.
-
-## Fabrics listed
-
-Play Boa · PV Plush · Velboa · Minky / Super Soft · Faux Fur (long pile) · Polar Fleece
-
-## Customers addressed
-
-Fabric wholesalers & retail shops · Soft toy / plush toy manufacturers · Garment & apparel manufacturers
-
-## Features
-
-- Enquiry list: add fabrics from the range, then send one enquiry
-- Enquiry form opens a pre-filled **WhatsApp** message or **email** (no backend needed)
-- Per-fabric "Ask on WhatsApp" links and a floating WhatsApp button
-- Responsive layout, accessible markup, reduced-motion support
-- SEO: meta tags, Open Graph, Organization structured data, sitemap, robots.txt
+## Design System
+- **Strict 3-color palette**:
+  - Fixed background: `#0B0A09`
+  - Fixed ink: `#F3EEE7`
+  - Dynamic 3rd accent color (`--accent`): switches automatically to match whichever PV Plush color preset is selected in the interactive carousel or color list.
+- **Image-free tactile UI**: Zero raster photos or WebGL canvases; every PV Plush swatch card uses layered pure-CSS pile grain and stitched trim inside a 3D coverflow widget.
+- **Single-fabric showcase**: Simple, plain-language copy focused solely on PV Plush pile fabric across multiple preset colors.
 
 ## Structure
+- `index.html` — Single-page layout (hero coverflow widget, sticky color stage & preset list, about section, buyer selector, inquiry form, swatch inspector modal)
+- `css/style.css` — 3-color CSS custom properties, 3D coverflow geometry, pure-CSS PV Plush texture, responsive rules
+- `js/main.js` — Coverflow drag/click/keyboard engine, dynamic 3rd-color switching, inspector modal controls, and WhatsApp/email inquiry composition
 
-```text
-index.html
-css/style.css
-js/main.js
-assets/images/   bg-pv-plush (hero), fabric close-ups (play-boa, pv-plush, velboa, minky, faux-fur, polar-fleece), fabric-rolls
-sitemap.xml
-robots.txt
-```
-
-## Editing content
-
-All contact details live in `index.html` (search for `94773374429` and `loomxlk@gmail.com`)
-and in the two constants at the top of `js/main.js`.
-
-> Note: the images in `assets/images/` are AI-generated illustrations. Replace them with
-> real photos of your fabrics and stock when available (keep the same file names).
-
-## Preview locally
-
-Open `index.html` in a browser, or run `npx -y serve . -p 3000`.
-
-## Contact
-
-- Loom X (Pvt) Ltd — Kadawatha, Sri Lanka
-- Phone / WhatsApp: [+94 77 337 4429](https://wa.me/94773374429)
-- Email: [loomxlk@gmail.com](mailto:loomxlk@gmail.com)
+## Verified Contact Details
+- **Company**: Loom X (Pvt) Ltd
+- **Location**: Kadawatha, Sri Lanka
+- **Phone / WhatsApp**: +94 77 337 4429
+- **Email**: loomxlk@gmail.com

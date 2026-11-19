@@ -1,453 +1,360 @@
-/**
- * Loom X (Pvt) Ltd — Site & Overhead PV Plush Background Wave Engine
- * - Nav state on scroll + mobile menu
- * - Enquiry list: "Add to enquiry" on fabric cards syncs with the form chips
- * - Enquiry form composes a real WhatsApp / email message (no fake submit)
- * - Reveal on scroll
- * - Background-only WebGL cloth ripple & lighting animation on the
- *   overhead PV Plush hero photo (zero floating text or moving cards)
+/* Loom X (Pvt) Ltd — PV Plush Pile Fabric
+ * Minimalist 3-color widget & coverflow controller
  */
+
+const WHATSAPP_NUMBER = '94773374429';
+const EMAIL = 'loomxlk@gmail.com';
+
+const PRESETS = [
+  { name: 'Crimson Red',   hex: '#EB3B3B', rgb: '235, 59, 59' },
+  { name: 'Honey Gold',    hex: '#E5A035', rgb: '229, 160, 53' },
+  { name: 'Emerald Green', hex: '#2EB878', rgb: '46, 184, 120' },
+  { name: 'Cobalt Blue',   hex: '#548AF7', rgb: '84, 138, 247' },
+  { name: 'Terracotta',    hex: '#E67045', rgb: '230, 112, 69' },
+  { name: 'Rosewood Pink', hex: '#DE5499', rgb: '222, 84, 153' },
+  { name: 'Teal Mint',     hex: '#4EC2B0', rgb: '78, 194, 176' },
+  { name: 'Soft Lavender', hex: '#9775FA', rgb: '151, 117, 250' }
+];
+
 (() => {
-  'use strict';
+  const $ = s => document.querySelector(s);
+  const pad = n => String(n).padStart(2, '0');
+  const N = PRESETS.length;
 
-  const WHATSAPP_NUMBER = '94773374429';
-  const EMAIL = 'loomxlk@gmail.com';
-  const HERO_FABRIC = {
-    img: 'assets/images/bg-pv-plush.jpg',
-    rimCol: [1.00, 0.80, 0.86]
-  };
-
-  const $ = (sel, ctx = document) => ctx.querySelector(sel);
-  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
-
-  /* ---------- Background Flow State ---------- */
-  const flowState = {
-    mode: 'sea', // 'sea' (Gentle Wave) | 'sky' (Breeze Drift)
-    mouseX: 0.5,
-    mouseY: 0.5,
-    targetMouseX: 0.5,
-    targetMouseY: 0.5,
-    mouseEnergy: 0,
-    scrollY: window.scrollY
-  };
-
-  /* ---------- Nav ---------- */
   const nav = $('#nav');
-  const toggle = $('#nav-toggle');
-  const links = $('#nav-links');
+  const cf = $('#cf');
+  const countEl = $('#count');
+  const heroColorName = $('#heroColorName');
+  const stageNum = $('#stageNum');
+  const stageName = $('#stageName');
+  const ctaWa = $('#ctaWa');
+  const colorList = $('#colorList');
+  const contactColorHeading = $('#contactColorHeading');
+  const fColor = $('#fColor');
+  const fBuyer = $('#fBuyer');
+  const fName = $('#fName');
+  const fMessage = $('#fMessage');
+  const formNote = $('#formNote');
 
-  const onScroll = () => {
-    flowState.scrollY = window.scrollY;
-    nav.classList.toggle('is-scrolled', flowState.scrollY > 40);
+  const tv = $('#tv');
+  const tvSwatchCode = $('#tvSwatchCode');
+  const tvNum = $('#tvNum');
+  const tvTitle = $('#tvTitle');
+  const tvWa = $('#tvWa');
+  const tvClose = $('#tvClose');
+
+  let pos = 0;
+  let target = 0;
+  let dragging = false;
+  let startX = 0;
+  let startPos = 0;
+  let moved = 0;
+  let lastIdx = -1;
+
+  const idx = () => ((Math.round(target) % N) + N) % N;
+  const waHref = colorName => {
+    const msg = `Hello Loom X, I would like to ask about ${colorName} PV Plush pile fabric.`;
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
   };
-  onScroll();
-  window.addEventListener('scroll', onScroll, { passive: true });
 
-  const setMenu = (open) => {
-    nav.classList.toggle('is-open', open);
-    toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-    document.body.style.overflow = open ? 'hidden' : '';
-  };
-  toggle.addEventListener('click', () => setMenu(!nav.classList.contains('is-open')));
-  $$('a', links).forEach(a => a.addEventListener('click', () => setMenu(false)));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
-  window.matchMedia('(min-width: 961px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
-
-  /* ---------- Background Motion Controls ---------- */
-  const flowPill = $('.flow-pill');
-  const flowBtns = $$('.flow-pill__btn[data-flow-mode]');
-  flowBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const mode = btn.dataset.flowMode || 'sea';
-      flowState.mode = mode;
-      if (flowPill) flowPill.dataset.mode = mode;
-      flowBtns.forEach(b => b.classList.toggle('is-active', b === btn));
-    });
+  /* ── Build 3D Carousel Swatch Cards (image-free pure CSS pile texture) ── */
+  const cards = PRESETS.map((p, i) => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'card';
+    el.style.setProperty('--card-color', p.hex);
+    el.setAttribute('aria-label', `${pad(i + 1)}. ${p.name} PV Plush — click to select or inspect`);
+    el.innerHTML = `
+      <div class="pile-texture" aria-hidden="true"></div>
+      <div class="stitch-frame" aria-hidden="true"></div>
+      <div class="shade" aria-hidden="true"></div>
+      <span class="n">${pad(i + 1)} · PV PLUSH</span>
+      <span class="pile-mark" aria-hidden="true">SAME SOFT PILE</span>
+      <span class="t">${p.name}</span>
+      <span class="go">Inspect swatch</span>
+    `;
+    cf.appendChild(el);
+    return el;
   });
 
-  const pureForestBtn = $('#toggle-pure-forest');
-  const heroSection = $('#forest-section');
-  if (pureForestBtn && heroSection) {
-    pureForestBtn.addEventListener('click', () => {
-      const active = heroSection.classList.toggle('is-pure-forest');
-      pureForestBtn.setAttribute('aria-pressed', String(active));
-      pureForestBtn.textContent = active ? 'Show Headline' : 'Inspect Fabric';
+  /* ── Build Interactive Color Preset List & Form Select ── */
+  colorList.innerHTML = PRESETS.map((p, i) => `
+    <li>
+      <button type="button" data-i="${i}">
+        <span class="i">${pad(i + 1)}</span>
+        <span class="nm">${p.name}<span class="sg" hidden>Active</span></span>
+        <span class="rd">Pick color →</span>
+      </button>
+    </li>
+  `).join('');
+
+  const listBtns = [...colorList.querySelectorAll('button')];
+
+  fColor.innerHTML = PRESETS.map((p, i) =>
+    `<option value="${p.name}">${pad(i + 1)} · ${p.name} PV Plush</option>`
+  ).join('');
+
+  /* ── Strict 3-Color Dynamic Accent Updater (2 fixed + 1 active fabric preset) ── */
+  function applyPreset(i) {
+    const p = PRESETS[i];
+    if (!p) return;
+
+    const root = document.documentElement.style;
+    root.setProperty('--accent', p.hex);
+    root.setProperty('--accent-rgb', p.rgb);
+
+    if (countEl) countEl.innerHTML = `<b>${pad(i + 1)}</b> / ${pad(N)}`;
+    if (heroColorName) heroColorName.textContent = p.name;
+    if (stageNum) stageNum.textContent = `COLOR ${pad(i + 1)} / ${pad(N)}`;
+    if (stageName) stageName.textContent = p.name;
+    if (contactColorHeading) contactColorHeading.textContent = p.name;
+
+    if (ctaWa) {
+      ctaWa.textContent = `Ask about ${p.name}`;
+      ctaWa.href = waHref(p.name);
+    }
+
+    if (fColor && fColor.value !== p.name) {
+      fColor.value = p.name;
+    }
+
+    listBtns.forEach((btn, bIdx) => {
+      const active = bIdx === i;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      const tag = btn.querySelector('.sg');
+      if (tag) tag.hidden = !active;
+      const rd = btn.querySelector('.rd');
+      if (rd) rd.textContent = active ? 'Selected ✓' : 'Pick color →';
     });
+
+    if (tvSwatchCode) tvSwatchCode.textContent = `COLOR ${pad(i + 1)}`;
+    if (tvNum) tvNum.textContent = `Color ${pad(i + 1)} of ${pad(N)}`;
+    if (tvTitle) tvTitle.textContent = p.name;
+    if (tvWa) tvWa.href = waHref(p.name);
   }
 
-  /* ---------- Enquiry list ---------- */
-  const selected = new Set();
-  const countEl = $('#enquiry-count');
-  const chips = $$('#fabric-chips input');
-  const cards = $$('.fabric');
+  /* ── 3D Curved Coverflow Math (lolawilde.com rhythm) ── */
+  const cardW = () => cards[0].offsetWidth || 290;
 
-  const render = () => {
-    countEl.textContent = selected.size;
-    countEl.classList.toggle('has-items', selected.size > 0);
+  function layout() {
+    const w = cardW();
+    const step = 23 * Math.PI / 180;
+    const R = (w * 1.12) / Math.sin(step);
 
-    cards.forEach(card => {
-      const on = selected.has(card.dataset.fabric);
-      card.classList.toggle('is-added', on);
-      const btn = $('.fabric__add', card);
-      btn.setAttribute('aria-pressed', String(on));
-      btn.textContent = on ? 'Added' : 'Add to enquiry';
+    cards.forEach((c, i) => {
+      let d = i - pos;
+      d = ((d % N) + N + N / 2) % N - N / 2;
+      const ad = Math.abs(d);
+      const a = d * step;
+      const x = R * Math.sin(a);
+      const z = R * (Math.cos(a) - 1) - ad * 30;
+
+      c.style.transform = `translate3d(${x}px, 0, ${z}px) rotateY(${a}rad)`;
+      c.style.opacity = ad > 3.2 ? 0 : ad > 2.4 ? (3.2 - ad) / 0.8 : 1;
+      c.style.zIndex = 100 - Math.round(ad * 10);
+      c.style.pointerEvents = ad > 2.8 ? 'none' : '';
+      c.classList.toggle('is-center', ad < 0.5);
+      c.tabIndex = ad < 0.5 ? 0 : -1;
     });
 
-    chips.forEach(chip => { chip.checked = selected.has(chip.value); });
-  };
-
-  const bump = () => {
-    countEl.classList.remove('bump');
-    void countEl.offsetWidth;
-    countEl.classList.add('bump');
-  };
-
-  cards.forEach(card => {
-    $('.fabric__add', card).addEventListener('click', () => {
-      const name = card.dataset.fabric;
-      selected.has(name) ? selected.delete(name) : (selected.add(name), bump());
-      render();
-    });
-  });
-
-  chips.forEach(chip => {
-    chip.addEventListener('change', () => {
-      chip.checked ? selected.add(chip.value) : selected.delete(chip.value);
-      render();
-    });
-  });
-
-  $('#enquiry-btn').addEventListener('click', () => {
-    $('#contact').scrollIntoView({ behavior: 'smooth' });
-  });
-
-  /* ---------- Enquiry form ---------- */
-  const form = $('#enquiry-form');
-  const errorEl = $('#enquiry-error');
-  let channel = 'whatsapp';
-
-  $$('button[type="submit"]', form).forEach(btn => {
-    btn.addEventListener('click', () => { channel = btn.dataset.channel; });
-  });
-
-  const showError = (msg, field) => {
-    errorEl.textContent = msg;
-    errorEl.hidden = false;
-    if (field) {
-      field.closest('.field')?.classList.add('has-error');
-      field.focus();
+    const curIdx = idx();
+    if (curIdx !== lastIdx) {
+      lastIdx = curIdx;
+      applyPreset(curIdx);
     }
-  };
+  }
 
-  form.addEventListener('input', () => {
-    errorEl.hidden = true;
-    $$('.has-error', form).forEach(el => el.classList.remove('has-error'));
+  function loop() {
+    if (!dragging) {
+      const diff = target - pos;
+      pos += Math.abs(diff) < 0.001 ? diff : diff * 0.12;
+    }
+    layout();
+    requestAnimationFrame(loop);
+  }
+
+  function goToIndex(i) {
+    const normalized = ((i % N) + N) % N;
+    target = Math.round(target) + (((normalized - idx()) % N) + N + N / 2) % N - N / 2;
+  }
+
+  /* ── Swatch Inspector Modal Controls ── */
+  function openModal(i = idx()) {
+    const nextIdx = ((i % N) + N) % N;
+    goToIndex(nextIdx);
+    applyPreset(nextIdx);
+    if (!tv.classList.contains('open')) {
+      tv.classList.add('open');
+      document.body.classList.add('locked');
+      setTimeout(() => tvClose && tvClose.focus(), 40);
+    }
+  }
+
+  function closeModal() {
+    tv.classList.remove('open');
+    document.body.classList.remove('locked');
+    cards[idx()]?.focus({ preventScroll: true });
+  }
+
+  /* ── Carousel Drag / Click / Wheel Events ── */
+  cf.addEventListener('pointerdown', e => {
+    dragging = true;
+    moved = 0;
+    startX = e.clientX;
+    startPos = pos;
+    cf.classList.add('dragging');
+    cf.setPointerCapture(e.pointerId);
   });
 
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-
-    const f = form.elements;
-    const name = f.namedItem('name').value.trim();
-    const business = f.namedItem('business').value.trim();
-    const type = f.namedItem('type').value;
-    const qty = f.namedItem('quantity').value.trim();
-    const msg = f.namedItem('message').value.trim();
-    const fabrics = chips.filter(c => c.checked).map(c => c.value);
-
-    if (!name) return showError('Please add your name.', f.namedItem('name'));
-    if (!fabrics.length && !msg) {
-      return showError('Please choose at least one fabric or tell us what you need.', f.namedItem('message'));
-    }
-
-    const details = [`Name: ${name}`];
-    if (business) details.push(`Business: ${business}`);
-    if (type) details.push(`Business type: ${type}`);
-    if (fabrics.length) details.push(`Fabrics: ${fabrics.join(', ')}`);
-    if (qty) details.push(`Approx. quantity: ${qty}`);
-    if (msg) details.push(`Details: ${msg}`);
-
-    const text = [
-      'Hello Loom X,',
-      '',
-      "I'd like to enquire about your fabrics.",
-      '',
-      ...details,
-      '',
-      'Please let me know colours, availability and pricing. Thank you.'
-    ].join('\n');
-
-    if (channel === 'email') {
-      const subject = `Fabric enquiry${business ? ' — ' + business : ''}`;
-      window.location.href = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
-    } else {
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-    }
+  cf.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    moved = Math.max(moved, Math.abs(dx));
+    pos = startPos - dx / (cardW() * 1.1);
   });
 
-  /* ---------- Reveal on scroll ---------- */
-  const reveals = $$('.reveal');
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (reduce || !('IntersectionObserver' in window)) {
-    reveals.forEach(el => el.classList.add('is-visible'));
-  } else {
-    $$('.fabric-grid, .customer-grid, .steps, .hero__content').forEach(group => {
-      $$('.reveal', group).forEach((el, i) => el.style.setProperty('--d', `${(i % 3) * 0.09}s`));
-    });
-
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible');
-          io.unobserve(entry.target);
+  const endDrag = e => {
+    if (!dragging) return;
+    dragging = false;
+    cf.classList.remove('dragging');
+    if (moved < 6) {
+      const card = document.elementFromPoint(e.clientX, e.clientY)?.closest('.card');
+      if (card) {
+        const i = cards.indexOf(card);
+        if (card.classList.contains('is-center')) {
+          openModal(i);
+        } else {
+          goToIndex(i);
         }
-      });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-
-    reveals.forEach(el => io.observe(el));
-  }
-
-  /* ---------- Footer year ---------- */
-  const year = $('#year');
-  if (year) year.textContent = new Date().getFullYear();
-
-  if (reduce) return;
-
-  /* ==========================================================================
-     POINTER TRACKER FOR HERO BACKGROUND RIPPLE ONLY
-     ========================================================================== */
-  if (heroSection) {
-    heroSection.addEventListener('pointermove', (e) => {
-      const rect = heroSection.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      const nx = (e.clientX - rect.left) / rect.width;
-      const ny = (e.clientY - rect.top) / rect.height;
-      const dist = Math.hypot(nx - flowState.targetMouseX, ny - flowState.targetMouseY);
-      flowState.mouseEnergy = Math.min(1.0, flowState.mouseEnergy + dist * 2.2);
-      flowState.targetMouseX = nx;
-      flowState.targetMouseY = ny;
-    }, { passive: true });
-  }
-
-  /* ==========================================================================
-     WEBGL OVERHEAD PV PLUSH CLOTH WAVE & LIGHTING BACKGROUND (#hero-canvas)
-     - Uses true cover-fit UV mapping so the 16:9 PV Plush photo never stretches
-     - Animates only the background cloth with smooth undulating folds and
-       synchronized raking velvet sheen across the real macro pile texture
-     ========================================================================== */
-  function initOverheadClothWebGL() {
-    const canvas = $('#hero-canvas');
-    if (!canvas) return null;
-
-    const gl = canvas.getContext('webgl', {
-      alpha: false,
-      antialias: true,
-      preserveDrawingBuffer: true,
-      powerPreference: 'high-performance'
-    });
-    if (!gl) return null;
-
-    const vsSource = `
-      attribute vec2 aPos;
-      varying vec2 vUv;
-      void main() {
-        vUv = aPos * 0.5 + 0.5;
-        vUv.y = 1.0 - vUv.y;
-        gl_Position = vec4(aPos, 0.0, 1.0);
       }
-    `;
-
-    const fsSource = `
-      precision highp float;
-      varying vec2 vUv;
-
-      uniform sampler2D uTex;
-      uniform vec2 uRes;
-      uniform vec2 uImgRes;
-      uniform float uTime;
-      uniform vec2 uMouse;
-      uniform float uMouseEnergy;
-      uniform float uMode; // 0 = gentle wave, 1 = breeze drift
-      uniform vec3 uRimCol;
-
-      vec2 coverUv(vec2 uv, vec2 res, vec2 imgRes) {
-        float rs = res.x / max(1.0, res.y);
-        float ri = imgRes.x / max(1.0, imgRes.y);
-        vec2 scale = rs > ri ? vec2(1.0, ri / rs) : vec2(rs / ri, 1.0);
-        return (uv - 0.5) * scale * 0.94 + 0.5;
-      }
-
-      float clothWave(vec2 uv, float t) {
-        float aspect = uRes.x / max(1.0, uRes.y);
-        vec2 p = vec2(uv.x * aspect, uv.y);
-
-        float speed = mix(0.65, 1.15, uMode);
-        float amp   = mix(1.0, 1.35, uMode);
-
-        float w1 = sin(p.x * 2.6 + p.y * 1.9 - t * speed) * 0.50;
-        float w2 = cos(p.x * 1.7 - p.y * 2.8 + t * speed * 0.78) * 0.34;
-        float w3 = sin((p.x + p.y) * 4.2 - t * speed * 1.25) * 0.16;
-
-        vec2 mp = vec2(uMouse.x * aspect, uMouse.y);
-        float dist = length(p - mp);
-        float cursorRipple = sin(dist * 16.0 - t * 4.0) * exp(-dist * 4.5) * (0.28 * uMouseEnergy);
-
-        return (w1 + w2 + w3) * amp + cursorRipple;
-      }
-
-      void main() {
-        float eps = 0.006;
-        float wC = clothWave(vUv, uTime);
-        float wX = (clothWave(vUv + vec2(eps, 0.0), uTime) - wC) / eps;
-        float wY = (clothWave(vUv + vec2(0.0, eps), uTime) - wC) / eps;
-        vec2 waveGrad = vec2(wX, wY);
-
-        vec2 disp = -waveGrad * 0.0032;
-        vec2 baseUv = clamp(coverUv(vUv, uRes, uImgRes) + disp, 0.004, 0.996);
-        vec3 col = texture2D(uTex, baseUv).rgb;
-
-        float texEps = 0.0022;
-        float lC = dot(col, vec3(0.333));
-        float lX = dot(texture2D(uTex, clamp(baseUv + vec2(texEps, 0.0), 0.004, 0.996)).rgb, vec3(0.333)) - lC;
-        float lY = dot(texture2D(uTex, clamp(baseUv + vec2(0.0, texEps), 0.004, 0.996)).rgb, vec3(0.333)) - lC;
-
-        vec3 n = normalize(vec3(
-          -waveGrad.x * 0.22 - lX * 1.35,
-          -waveGrad.y * 0.22 - lY * 1.35,
-          1.0
-        ));
-
-        vec3 lightDir = normalize(vec3(0.45 + 0.12 * sin(uTime * 0.4), -0.45 + 0.10 * cos(uTime * 0.35), 0.76));
-        float diff = max(0.0, dot(n, lightDir));
-        float wrapDiff = 0.80 + 0.34 * diff;
-        float rimSheen = pow(clamp(1.0 - n.z, 0.0, 1.0), 1.8);
-
-        vec3 lit = col * wrapDiff;
-        lit += uRimCol * rimSheen * (0.10 + 0.12 * lC);
-
-        gl_FragColor = vec4(lit, 1.0);
-      }
-    `;
-
-    function compile(type, src) {
-      const s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) return null;
-      return s;
+      target = Math.round(target);
+      return;
     }
+    target = Math.round(pos);
+  };
 
-    const vs = compile(gl.VERTEX_SHADER, vsSource);
-    const fs = compile(gl.FRAGMENT_SHADER, fsSource);
-    if (!vs || !fs) return null;
+  cf.addEventListener('pointerup', endDrag);
+  cf.addEventListener('pointercancel', endDrag);
 
-    const prog = gl.createProgram();
-    gl.attachShader(prog, vs);
-    gl.attachShader(prog, fs);
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
-
-    const vbo = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-
-    const aPos = gl.getAttribLocation(prog, 'aPos');
-    gl.enableVertexAttribArray(aPos);
-    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-
-    let textureReady = false;
-    let fileProtocolBlocked = false;
-    let imgRes = [1376, 768];
-    const tex = gl.createTexture();
-
-    const img = new Image();
-    img.onload = () => {
-      try {
-        gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        imgRes = [img.naturalWidth || 1376, img.naturalHeight || 768];
-        textureReady = true;
-        canvas.classList.add('is-ready');
-      } catch (_) {
-        fileProtocolBlocked = true;
-        canvas.classList.remove('is-ready');
-      }
-    };
-    img.src = HERO_FABRIC.img;
-
-    const uLoc = {
-      tex:         gl.getUniformLocation(prog, 'uTex'),
-      res:         gl.getUniformLocation(prog, 'uRes'),
-      imgRes:      gl.getUniformLocation(prog, 'uImgRes'),
-      time:        gl.getUniformLocation(prog, 'uTime'),
-      mouse:       gl.getUniformLocation(prog, 'uMouse'),
-      mouseEnergy: gl.getUniformLocation(prog, 'uMouseEnergy'),
-      mode:        gl.getUniformLocation(prog, 'uMode'),
-      rimCol:      gl.getUniformLocation(prog, 'uRimCol')
-    };
-
-    function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
-      const w = Math.floor(canvas.clientWidth * dpr);
-      const h = Math.floor(canvas.clientHeight * dpr);
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-        gl.viewport(0, 0, w, h);
-      }
+  cf.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openModal(idx());
     }
-    resize();
-    window.addEventListener('resize', resize, { passive: true });
+  });
 
-    let modeVal = 0;
-    const lerp = (a, b, k) => a + (b - a) * k;
+  cf.addEventListener('wheel', e => {
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 4) {
+      e.preventDefault();
+      clearTimeout(cf._w);
+      target += e.deltaX / 360;
+      cf._w = setTimeout(() => {
+        target = Math.round(target);
+      }, 130);
+    }
+  }, { passive: false });
 
-    return function renderBackground(timeSec) {
-      if (fileProtocolBlocked || !textureReady) return;
-      if (flowState.scrollY > window.innerHeight * 1.35) return;
+  $('#prev')?.addEventListener('click', () => {
+    target = Math.round(target) - 1;
+  });
 
-      const targetMode = flowState.mode === 'sky' ? 1.0 : 0.0;
-      modeVal = lerp(modeVal, targetMode, 0.05);
+  $('#next')?.addEventListener('click', () => {
+    target = Math.round(target) + 1;
+  });
 
-      gl.useProgram(prog);
+  /* ── Sync Preset Selections Across List, Stage & Contact Form ── */
+  colorList.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-i]');
+    if (!btn) return;
+    goToIndex(+btn.dataset.i);
+  });
 
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.uniform1i(uLoc.tex, 0);
+  fColor?.addEventListener('change', () => {
+    const found = PRESETS.findIndex(p => p.name === fColor.value);
+    if (found >= 0) goToIndex(found);
+  });
 
-      gl.uniform2f(uLoc.res, canvas.width, canvas.height);
-      gl.uniform2fv(uLoc.imgRes, imgRes);
-      gl.uniform1f(uLoc.time, timeSec);
-      gl.uniform2f(uLoc.mouse, flowState.mouseX, flowState.mouseY);
-      gl.uniform1f(uLoc.mouseEnergy, flowState.mouseEnergy);
-      gl.uniform1f(uLoc.mode, modeVal);
-      gl.uniform3fv(uLoc.rimCol, HERO_FABRIC.rimCol);
+  $('#openStageModal')?.addEventListener('click', () => openModal(idx()));
+  tvClose?.addEventListener('click', closeModal);
+  $('#tvPrev')?.addEventListener('click', () => openModal(idx() - 1));
+  $('#tvNext')?.addEventListener('click', () => openModal(idx() + 1));
+  $('#tvGoContact')?.addEventListener('click', () => {
+    closeModal();
+    $('#contact')?.scrollIntoView({ behavior: 'smooth' });
+  });
 
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    };
+  tv?.addEventListener('click', e => {
+    if (e.target === tv || e.target.classList.contains('tv-shade')) {
+      closeModal();
+    }
+  });
+
+  addEventListener('keydown', e => {
+    if (tv.classList.contains('open')) {
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowRight') openModal(idx() + 1);
+      if (e.key === 'ArrowLeft') openModal(idx() - 1);
+    } else if (
+      document.activeElement?.closest('#cf') ||
+      (scrollY < innerHeight * 0.5 && document.activeElement === document.body)
+    ) {
+      if (e.key === 'ArrowRight') target = Math.round(target) + 1;
+      if (e.key === 'ArrowLeft') target = Math.round(target) - 1;
+    }
+  });
+
+  /* ── Buyer Shortcut Rows -> Pre-fill Contact Form ── */
+  $('#buyerPicker')?.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-buyer]');
+    if (!btn) return;
+    if (fBuyer) fBuyer.value = btn.dataset.buyer;
+    if (formNote) formNote.textContent = `Selected: ${btn.dataset.buyer} · ${PRESETS[idx()].name} PV Plush`;
+    $('#contact')?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => fName?.focus({ preventScroll: true }), 420);
+  });
+
+  /* ── WhatsApp & Email Enquiry Composition ── */
+  function buildInquiry() {
+    const color = fColor?.value || PRESETS[idx()].name;
+    const buyer = fBuyer?.value || 'Fabric buyer';
+    const name = fName?.value.trim();
+    const msg = fMessage?.value.trim();
+
+    const lines = [
+      'Hello Loom X (Pvt) Ltd,',
+      `I am interested in PV Plush pile fabric (${color}).`,
+      `Buyer type: ${buyer}`
+    ];
+    if (name) lines.push(`Name: ${name}`);
+    if (msg) lines.push(`Notes: ${msg}`);
+    return { color, body: lines.join('\n') };
   }
 
-  /* ==========================================================================
-     UNIFIED 60FPS BACKGROUND LOOP
-     ========================================================================== */
-  const renderBackground = initOverheadClothWebGL();
+  $('#sendWa')?.addEventListener('click', () => {
+    const { color, body } = buildInquiry();
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(body)}`;
+    if (formNote) formNote.textContent = `Opening WhatsApp for ${color} PV Plush...`;
+    window.open(url, '_blank', 'noopener');
+  });
 
-  function tick(nowMs) {
-    const t = nowMs * 0.001;
+  $('#sendEmail')?.addEventListener('click', () => {
+    const { color, body } = buildInquiry();
+    const subject = `PV Plush Fabric Inquiry — ${color}`;
+    const url = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    if (formNote) formNote.textContent = `Opening email draft for ${color} PV Plush...`;
+    window.location.href = url;
+  });
 
-    flowState.mouseX += (flowState.targetMouseX - flowState.mouseX) * 0.08;
-    flowState.mouseY += (flowState.targetMouseY - flowState.mouseY) * 0.08;
-    flowState.mouseEnergy *= 0.94;
+  /* ── Nav Scroll State & Year ── */
+  addEventListener('scroll', () => {
+    nav?.classList.toggle('solid', scrollY > 40);
+  }, { passive: true });
 
-    if (renderBackground) renderBackground(t);
+  const yearEl = $('#year');
+  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
+  addEventListener('resize', layout);
+  applyPreset(0);
+  loop();
 })();
